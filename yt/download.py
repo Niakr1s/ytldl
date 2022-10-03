@@ -7,6 +7,23 @@ from ytmusicapi import YTMusic
 
 
 class Downloader(YTMusic):
+    """
+    Downloads tracks.
+
+    First we should setup auth headers:
+       Downloader.setup(auth_header_path, headers_raw)
+
+    Instantiate downloader instance:
+       d = Downloader(download_dir=dir, auth_header_path)
+
+    Download. 
+     :v
+      VIDEO param video page's url:  https://music.youtube.com/watch?v=VIDEO
+     :l
+      LIST param of playlist page's url: https://music.youtube.com/playlist?list=LIST
+       d.download(v=args.v, l=args.l)
+    """
+
     _ydl_opts = {
         'format': 'bestaudio/best',
         # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
@@ -72,3 +89,15 @@ class Downloader(YTMusic):
     def download_playlist(self, playlist_id: str):
         video_ids = self.extract_video_ids(playlist_id)
         self.download_tracks(video_ids)
+
+    def download(self, v: List[str] = [], l: List[str] = []):
+        """
+        Main method of this class.
+        """
+        with ThreadPoolExecutor() as executor:
+            list_of_video_ids = executor.map(
+                lambda x: self.extract_video_ids(x), l)
+            v.extend([item for sublist in list_of_video_ids for item in sublist])
+        v = set(v)
+        print("starting to download {} tracks".format(len(v)))
+        self.download_tracks(v)

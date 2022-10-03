@@ -41,12 +41,12 @@ def args() -> argparse.Namespace:
     dl_parser = action_parsers.add_parser("dl")
     dl_parser.add_argument(
         "-o", "--dir", help="output directory", required=True)
-    group = dl_parser.add_mutually_exclusive_group()
+    group = dl_parser.add_argument_group()
     group.required = True
     group.add_argument(
-        "-v",  help="Video from song page: https://music.youtube.com/watch?v=VIDEO")
+        "-v",  help="Video from song page: https://music.youtube.com/watch?v=VIDEO", nargs='*', default=[])
     group.add_argument(
-        "-l", help="List from playlist page: https://music.youtube.com/playlist?list=LIST")
+        "-l", help="List from playlist page: https://music.youtube.com/playlist?list=LIST", nargs='*', default=[])
 
     res = parser.parse_args()
     return res
@@ -68,10 +68,7 @@ if __name__ == "__main__":
             dir = args.dir
             d = Downloader(download_dir=dir,
                            auth=settings_dir / auth_header_path)
-            if args.v:
-                d.download_track(args.v)
-            elif args.l:
-                d.download_playlist(args.l)
+            d.download(v=args.v, l=args.l)
 
         case 'auth':
             headers_raw = args.headers
