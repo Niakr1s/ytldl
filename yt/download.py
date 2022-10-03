@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pathlib
 from typing import Any, Dict, List
 from yt_dlp import YoutubeDL
-from yt.postprocessors import FilterPP, FilterPPException, InfoExtractorPP, LyricsPP, MetadataPP
+from yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
 
@@ -32,18 +32,17 @@ class Downloader(YTMusic):
         self._ydl_opts['paths']['home'] = download_dir
 
     # returns download filepath
-    def download_track(self, video_id: str) -> str:
+    def download_track(self, video_id: str):
         url = "https://youtube.com/watch?v={}".format(video_id)
 
         try:
             with YoutubeDL(self._ydl_opts) as ydl:
                 ydl.add_post_processor(FilterPP(), when='pre_process')
-                infoExtractor = InfoExtractorPP()
                 ydl.add_post_processor(LyricsPP(), when='post_process')
                 ydl.add_post_processor(MetadataPP(), when='post_process')
-                ydl.add_post_processor(infoExtractor, when='post_process')
+
                 ydl.download([url])
-                return infoExtractor.info["filepath"]
+
         except FilterPPException:
             print("skipping due to FilterPP")
         except Exception as e:
@@ -52,7 +51,7 @@ class Downloader(YTMusic):
     # to use it, you should provide google auth headers
     # TODO: add explanation how to get them
     # returns download filepaths.
-    def download_playlist(self, playlist_id: str) -> List[str]:
+    def download_playlist(self, playlist_id: str):
         res: List[str] = []
         url = "https://youtube.com/playlist?list={}".format(playlist_id)
         playlist = self.get_playlist(playlist_id)

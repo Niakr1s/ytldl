@@ -71,18 +71,6 @@ class MetadataPP(PostProcessor):
         write_metadata(self.filepath, self.metadata)
 
 
-class InfoExtractorPP(PostProcessor):
-    """
-    Extracts result info
-    """
-
-    info: Dict[str, Any]
-
-    def run(self, info: Dict[str, Any]):
-        self.info = info
-        return super().run(info)
-
-
 def is_song(info: Dict[str, Any]) -> bool:
     return all(k in info for k in ["artist", "title"])
 
