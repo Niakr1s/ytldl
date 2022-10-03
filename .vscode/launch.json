@@ -10,7 +10,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/ytldl.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+            "args": [
+                "dl",
+                "-o",
+                "tmp",
+                "-v",
+                "EqnuF2WyhbU"
+            ]
         }
     ]
 }
