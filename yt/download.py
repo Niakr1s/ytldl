@@ -49,6 +49,10 @@ class Downloader(YTMusic):
             print("couldn't download {}: {}".format(video_id, e))
 
     def download_tracks(self, video_ids: List[str]):
+        """
+        Downloads several tracks, based on their video_ids in thread pool.
+        Uses set() to not to allow video_ids doublicates.
+        """
         video_ids = set(video_ids)
 
         def download_track(video_id: str):
