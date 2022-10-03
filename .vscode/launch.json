@@ -29,6 +29,21 @@
                 "RDAMVMpm9JyMiAU6A",
                 "RDTMAK5uy_kskEGBYLWbdi3Z9IdjDoDEI8hEBvHEreM"
             ]
+        },
+        {
+            "name": "ytldl single",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/ytldl.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "dl",
+                "-o",
+                "tmp",
+                "-v",
+                "pm9JyMiAU6A",
+            ]
         }
     ]
 }
