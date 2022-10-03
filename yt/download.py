@@ -48,6 +48,13 @@ class Downloader(YTMusic):
         except Exception as e:
             print("couldn't download {}: {}".format(video_id, e))
 
+    def download_tracks(self, video_ids: List[str]):
+        def download_track(video_id: str):
+            self.download_track(video_id)
+
+        with ThreadPoolExecutor() as executor:
+            executor.map(download_track, video_ids)
+
     def extract_video_ids(self, playlist_id: str) -> List[str]:
         playlist = self.get_playlist(playlist_id)
         tracks: List[Any] = playlist['tracks']
@@ -58,9 +65,4 @@ class Downloader(YTMusic):
     # returns download filepaths.
     def download_playlist(self, playlist_id: str):
         video_ids = self.extract_video_ids(playlist_id)
-
-        def download_track(video_id: str) -> str:
-            return self.download_track(video_id)
-
-        with ThreadPoolExecutor() as executor:
-            executor.map(download_track, video_ids)
+        self.download_tracks(video_ids)
