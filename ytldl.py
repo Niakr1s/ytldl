@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     match args.action:
         case 'dl':
-            dir: str = args.dir
+            dir = args.dir
             d = Downloader(download_dir=dir,
                            auth=settings_dir / AUTH_HEADER_FILENAME)
             if args.v:
