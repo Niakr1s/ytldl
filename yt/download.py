@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 import pathlib
 from typing import Any, Dict, List
 from yt_dlp import YoutubeDL
@@ -76,6 +76,16 @@ class Downloader(YTMusic):
             self.download_track(video_id)
 
         with ThreadPoolExecutor() as executor:
+            futures: List[Future] = []
+            for video_id in video_ids:
+                futures.append(executor.submit(download_track, video_id))
+            for future in futures:
+                try:
+                    future.result()
+                except Exception as e:
+                    print("couldn't download video: {}".format(e))
+
+        with ThreadPoolExecutor() as executor:
             executor.map(download_track, video_ids)
 
     def extract_video_ids(self, playlist_id: str) -> List[str]:
@@ -95,9 +105,18 @@ class Downloader(YTMusic):
         Main method of this class.
         """
         with ThreadPoolExecutor() as executor:
-            list_of_video_ids = executor.map(
-                lambda x: self.extract_video_ids(x), l)
-            v.extend([item for sublist in list_of_video_ids for item in sublist])
+            futures: List[Future[List[str]]] = []
+            for playlist_id in l:
+                futures.append(executor.submit(
+                    lambda x: self.extract_video_ids(x), playlist_id))
+            for future in futures:
+                try:
+                    res = future.result()
+                    v.extend(res)
+                except Exception as e:
+                    print("skipping playlist, couldn't extract video ids: {} ({})".format(
+                        e, e.__class__))
+
         v = set(v)
         print("starting to download {} tracks".format(len(v)))
         self.download_tracks(v)
