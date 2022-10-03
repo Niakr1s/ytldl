@@ -1,7 +1,9 @@
 from concurrent.futures import Future, ThreadPoolExecutor
+from functools import partial
 import pathlib
 from typing import Any, Dict, List
 from yt_dlp import YoutubeDL
+from util.exxception import try_or
 from yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
@@ -89,7 +91,15 @@ class Downloader(YTMusic):
             executor.map(download_track, video_ids)
 
     def extract_video_ids(self, playlist_id: str) -> List[str]:
-        playlist = self.get_playlist(playlist_id)
+        playlist = try_or(
+            partial(Downloader.get_playlist, self, playlistId=playlist_id))
+        if playlist == None:
+            playlist = try_or(
+                partial(Downloader.get_watch_playlist, self, playlistId=playlist_id))
+        if playlist == None:
+            print("couldn't get songs from {}".format(playlist_id))
+            return []
+        print("got songs from {}".format(playlist_id))
         tracks: List[Any] = playlist['tracks']
         return map(lambda x: x['videoId'], tracks)
 
