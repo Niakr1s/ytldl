@@ -1,5 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 import pathlib
-from typing import List
+from typing import Any, List
 from yt_dlp import YoutubeDL
 from yt.postprocessors import InfoExtractorPP, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
@@ -55,12 +56,13 @@ class Downloader:
         res: List[str] = []
         url = "https://youtube.com/playlist?list={}".format(playlist_id)
         playlist = self._yt.get_playlist(playlist_id)
-        tracks = playlist['tracks']
+        tracks: List[Any] = playlist['tracks']
 
-        with YoutubeDL(self._ydl_opts) as ydl:
-            for track in tracks:
-                video_id = track['videoId']
-                filepath = self.download_track(video_id)
-                res.append(filepath)
+        def download_track(video_id: str) -> str:
+            return self.download_track(video_id)
+
+        with ThreadPoolExecutor() as executor:
+            executor.map(download_track, map(
+                lambda x: x['videoId'], tracks))
 
         return res
