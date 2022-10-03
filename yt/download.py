@@ -48,20 +48,19 @@ class Downloader(YTMusic):
         except Exception as e:
             print("couldn't download {}: {}".format(video_id, e))
 
+    def extract_video_ids(self, playlist_id: str) -> List[str]:
+        playlist = self.get_playlist(playlist_id)
+        tracks: List[Any] = playlist['tracks']
+        return map(lambda x: x['videoId'], tracks)
+
     # to use it, you should provide google auth headers
     # TODO: add explanation how to get them
     # returns download filepaths.
     def download_playlist(self, playlist_id: str):
-        res: List[str] = []
-        url = "https://youtube.com/playlist?list={}".format(playlist_id)
-        playlist = self.get_playlist(playlist_id)
-        tracks: List[Any] = playlist['tracks']
+        video_ids = self.extract_video_ids(playlist_id)
 
         def download_track(video_id: str) -> str:
             return self.download_track(video_id)
 
         with ThreadPoolExecutor() as executor:
-            executor.map(download_track, map(
-                lambda x: x['videoId'], tracks))
-
-        return res
+            executor.map(download_track, video_ids)
