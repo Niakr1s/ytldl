@@ -87,9 +87,6 @@ class Downloader(YTMusic):
                 except Exception as e:
                     print("couldn't download video: {}".format(e))
 
-        with ThreadPoolExecutor() as executor:
-            executor.map(download_track, video_ids)
-
     def extract_video_ids(self, playlist_id: str) -> List[str]:
         playlist = try_or(
             partial(Downloader.get_playlist, self, playlistId=playlist_id))
