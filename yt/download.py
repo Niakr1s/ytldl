@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 import pathlib
-from typing import Any, List
+from typing import Any, Dict, List
 from yt_dlp import YoutubeDL
 from yt.postprocessors import InfoExtractorPP, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
@@ -23,9 +23,13 @@ class Downloader:
         },
     }
 
-    def __init__(self, download_dir: str = None) -> None:
+    # stores headers into filesystem
+    def set_headers(filepath: str, headers_raw: str) -> Dict:
+        return YTMusic.setup(filepath, headers_raw)
+
+    def __init__(self, download_dir: str = None, auth: str = None) -> None:
         self.set_download_dir(download_dir)
-        self._yt = YTMusic("headers_auth.json")
+        self._yt = YTMusic(auth)
         pass
 
     def set_download_dir(self, download_dir: str):
