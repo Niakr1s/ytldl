@@ -49,6 +49,8 @@ class Downloader(YTMusic):
             print("couldn't download {}: {}".format(video_id, e))
 
     def download_tracks(self, video_ids: List[str]):
+        video_ids = set(video_ids)
+
         def download_track(video_id: str):
             self.download_track(video_id)
 
