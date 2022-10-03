@@ -6,9 +6,7 @@ from yt.postprocessors import InfoExtractorPP, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
 
-class Downloader:
-    _yt: YTMusic
-
+class Downloader(YTMusic):
     _ydl_opts = {
         'format': 'bestaudio/best',
         # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
@@ -23,14 +21,9 @@ class Downloader:
         },
     }
 
-    # stores headers into filesystem
-    def set_headers(filepath: str, headers_raw: str) -> Dict:
-        return YTMusic.setup(filepath, headers_raw)
-
-    def __init__(self, download_dir: str = None, auth: str = None) -> None:
+    def __init__(self, download_dir: str, auth: str = None, user: str = None, requests_session=True, proxies: dict = None, language: str = 'en'):
+        super().__init__(auth, user, requests_session, proxies, language)
         self.set_download_dir(download_dir)
-        self._yt = YTMusic(auth)
-        pass
 
     def set_download_dir(self, download_dir: str):
         pathlib.Path(download_dir).mkdir(parents=True, exist_ok=True)
@@ -59,7 +52,7 @@ class Downloader:
     def download_playlist(self, playlist_id: str) -> List[str]:
         res: List[str] = []
         url = "https://youtube.com/playlist?list={}".format(playlist_id)
-        playlist = self._yt.get_playlist(playlist_id)
+        playlist = self.get_playlist(playlist_id)
         tracks: List[Any] = playlist['tracks']
 
         def download_track(video_id: str) -> str:

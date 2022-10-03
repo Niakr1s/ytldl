@@ -77,5 +77,5 @@ if __name__ == "__main__":
 
         case 'auth':
             headers_raw = args.headers
-            Downloader.set_headers(
+            Downloader.setup(
                 settings_dir / AUTH_HEADER_FILENAME, headers_raw)
