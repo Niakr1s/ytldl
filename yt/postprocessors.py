@@ -81,3 +81,24 @@ class InfoExtractorPP(PostProcessor):
     def run(self, info: Dict[str, Any]):
         self.info = info
         return super().run(info)
+
+
+def is_song(info: Dict[str, Any]) -> bool:
+    return all(k in info for k in ["artist", "title"])
+
+
+class FilterPPException(Exception):
+    pass
+
+
+class FilterPP(PostProcessor):
+    """
+    Filters unwanted songs.
+    """
+
+    info: Dict[str, Any]
+
+    def run(self, info: Dict[str, Any]):
+        if not is_song(info):
+            raise FilterPPException()
+        return [], info

@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pathlib
 from typing import Any, Dict, List
 from yt_dlp import YoutubeDL
-from yt.postprocessors import InfoExtractorPP, LyricsPP, MetadataPP
+from yt.postprocessors import FilterPP, FilterPPException, InfoExtractorPP, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
 
@@ -37,12 +37,15 @@ class Downloader(YTMusic):
 
         try:
             with YoutubeDL(self._ydl_opts) as ydl:
+                ydl.add_post_processor(FilterPP(), when='pre_process')
                 infoExtractor = InfoExtractorPP()
                 ydl.add_post_processor(LyricsPP(), when='post_process')
                 ydl.add_post_processor(MetadataPP(), when='post_process')
                 ydl.add_post_processor(infoExtractor, when='post_process')
                 ydl.download([url])
                 return infoExtractor.info["filepath"]
+        except FilterPPException:
+            print("skipping due to FilterPP")
         except Exception as e:
             print("couldn't download {}: {}".format(video_id, e))
 
