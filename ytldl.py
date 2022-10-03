@@ -58,18 +58,16 @@ def make_settings_dir() -> str:
     return settings_dir
 
 
-AUTH_HEADER_FILENAME = "auth_headers.json"
-
-
 if __name__ == "__main__":
     args = args()
     settings_dir = make_settings_dir()
+    auth_header_path = settings_dir / "auth_headers.json"
 
     match args.action:
         case 'dl':
             dir = args.dir
             d = Downloader(download_dir=dir,
-                           auth=settings_dir / AUTH_HEADER_FILENAME)
+                           auth=settings_dir / auth_header_path)
             if args.v:
                 d.download_track(args.v)
             elif args.l:
@@ -78,4 +76,4 @@ if __name__ == "__main__":
         case 'auth':
             headers_raw = args.headers
             Downloader.setup(
-                settings_dir / AUTH_HEADER_FILENAME, headers_raw)
+                settings_dir / auth_header_path, headers_raw)
