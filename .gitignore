@@ -1,0 +1,6 @@
+*.mp4
+*.m4a
+tmp
+json
+headers_auth.json
+__pycache__
