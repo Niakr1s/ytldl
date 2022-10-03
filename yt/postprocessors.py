@@ -1,8 +1,11 @@
 import pathlib
+import requests
 from metadata.metadata import write_metadata
 from ytmusicapi import YTMusic
 from yt_dlp.postprocessor import PostProcessor
 from typing import Any, Dict, List
+from PIL import Image
+from io import BytesIO
 
 
 class LyricsPP(PostProcessor):
@@ -42,8 +45,10 @@ class MetadataPP(PostProcessor):
     artist, title, lyrics, url
     """
 
+    THUMBNAIL = "thumbnail"
+
     # metadata, that will be written
-    metadata: Dict[str, str] = {}
+    metadata: Dict = {}
 
     # filepath, metadata will be written to
     filepath: str
@@ -52,6 +57,11 @@ class MetadataPP(PostProcessor):
         self.metadata["artist"] = info["artist"]
         self.metadata["title"] = info["title"]
         self.metadata["url"] = info["webpage_url"]
+
+        thumbnail = info[MetadataPP.THUMBNAIL]
+        if thumbnail:
+            self.metadata[MetadataPP.THUMBNAIL] = self.get_image_bytes(
+                thumbnail)
 
         lyrics = info.get("lyrics")
         if lyrics:
@@ -64,6 +74,13 @@ class MetadataPP(PostProcessor):
             "Wrote metadata to {}".format(self.filepath))
 
         return [], info
+
+    def get_image_bytes(self, url: str, format: str = "JPEG") -> bytes:
+        response = requests.get(url)
+        img = Image.open(BytesIO(response.content))
+        img_jpg = BytesIO()
+        img.save(img_jpg, format=format)
+        return img_jpg.getvalue()
 
     def write_metadata(self):
         self.write_debug(
