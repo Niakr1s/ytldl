@@ -92,6 +92,8 @@ class Downloader(YTMusic):
                     downloaded_video_id = future.result()
                     downloaded_video_ids.append(downloaded_video_id)
                 except FilterPPException:
+                    # we adding those too, coz it's we who want to filter those
+                    downloaded_video_ids.append(downloaded_video_id)
                     print("skipping due to FilterPP")
                 except Exception as e:
                     print(f"couldn't download {video_id}: {e}")
