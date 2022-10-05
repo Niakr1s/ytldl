@@ -6,3 +6,5 @@ headers_auth.json
 __pycache__
 run.cmd
 *.ipynb
+*egg-info
+build/*
