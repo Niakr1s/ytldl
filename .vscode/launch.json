@@ -55,7 +55,7 @@
             ]
         },
         {
-            "name": "ytldl home",
+            "name": "ytldl lib",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/ytldl.py",
@@ -65,7 +65,7 @@
                 "DEBUG": ""
             },
             "args": [
-                "home",
+                "lib",
                 "-o",
                 "tmp",
                 "-u",
