@@ -111,13 +111,6 @@ class Downloader(YTMusic):
         artist = self.get_artist(channel_id)
         return self.extract_video_ids(artist["songs"]["browseId"])
 
-    # to use it, you should provide google auth headers
-    # TODO: add explanation how to get them
-    # returns download filepaths.
-    def download_playlist(self, playlist_id: str):
-        video_ids = self.extract_video_ids(playlist_id)
-        self.download_tracks(video_ids)
-
     def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = []):
         """
         Main method of this class.
