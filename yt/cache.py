@@ -6,6 +6,10 @@ class Cache(metaclass=ABCMeta):
     def is_in_cache(self, item) -> bool:
         pass
 
+    @abstractmethod
+    def add_item(self, item):
+        pass
+
 
 class MemoryCache(Cache):
     def __init__(self, init_items: list = []):
@@ -13,3 +17,6 @@ class MemoryCache(Cache):
 
     def is_in_cache(self, item) -> bool:
         return item in self.cache
+
+    def add_item(self, item):
+        self.cache.add(item)
