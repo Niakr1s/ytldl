@@ -42,9 +42,8 @@ class Downloader(YTMusic):
         },
     }
 
-    def __init__(self, download_dir: str, auth: str = None, user: str = None, requests_session=True, proxies: dict = None, language: str = 'en',
-                 debug: bool = False):
-        super().__init__(auth, user, requests_session, proxies, language)
+    def __init__(self, download_dir: str, auth: str = None, debug: bool = False):
+        super().__init__(auth)
         self.debug = debug
         self.set_download_dir(download_dir)
 
@@ -137,9 +136,8 @@ class Downloader(YTMusic):
 
 
 class LibDownloader(Downloader):
-    def __init__(self, download_dir: str, auth: str = None, user: str = None, requests_session=True, proxies: dict = None, language: str = 'en', debug: bool = False):
-        super().__init__(download_dir, auth, user,
-                         requests_session, proxies, language, debug)
+    def __init__(self, download_dir: str, auth: str = None, debug: bool = False):
+        super().__init__(download_dir, auth,  debug)
 
     def get_home_items(self, filter_titles: list) -> dict:
         """
