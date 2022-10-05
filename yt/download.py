@@ -209,7 +209,7 @@ class CacheDownloader(Downloader):
             uncached_video_ids,
             after_download=lambda x: self.cache.add_items([x]), on_discarded=lambda x: self.cache.add_items(x),
             *args, **kwargs)
-        self.cache.add_items(commit=True)
+        self.cache.commit()
         return downloaded_tracks
 
 

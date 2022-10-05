@@ -11,10 +11,16 @@ class Cache(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def add_items(self, items: list = [], commit: bool = False):
+    def add_items(self, items: list):
         """
         Should cache items.
-        Cache can batching writes to disk, so at last call it can be called as: add_items([], commit=True), so it can finish write all leftovers.
+        """
+        pass
+
+    @abstractmethod
+    def commit(self):
+        """
+        Should be called to finalize cache (write to disk etc).
         """
         pass
 
@@ -28,6 +34,9 @@ class MemoryCache(Cache):
 
     def add_items(self, items: list):
         self.cache.update(items)
+
+    def commit(self):
+        pass
 
 
 class SqliteCache(Cache):
@@ -49,17 +58,27 @@ class SqliteCache(Cache):
         uncached = set(items).difference(cached)
         return uncached
 
-    def add_items(self, items: list = [], commit: bool = False):
+    def _commit(self):
+        """
+        adds items in batch and clears it
+        """
+        print(f"inserting {len(self.batch)} items into db")
+        self.cur.executemany('INSERT OR IGNORE INTO "items" ("item") VALUES (?);', [
+            [item] for item in self.batch])
+        self.con.commit()
+        self.batch = []
+
+    def add_items(self, items: list):
         self.batch.extend(items)
 
         exceeds_batch_size = self.batch_size != 0 and len(
             self.batch) > self.batch_size
 
-        if self.batch_size == 0 or exceeds_batch_size or commit:
-            self.cur.executemany('INSERT OR IGNORE INTO "items" ("item") VALUES (?);', [
-                [item] for item in self.batch])
-            self.con.commit()
-            self.batch = []
+        if self.batch_size == 0 or exceeds_batch_size:
+            self._commit()
+
+    def commit(self):
+        self._commit()
 
     def create(path: str):
         con = sqlite3.connect(path)
