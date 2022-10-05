@@ -13,8 +13,6 @@ class LyricsPP(PostProcessor):
     Gets lyrics and adds it to info
     """
 
-    yt: YTMusic
-
     def __init__(self, downloader=None):
         super().__init__(downloader)
         self.yt = YTMusic()
@@ -47,11 +45,9 @@ class MetadataPP(PostProcessor):
 
     THUMBNAIL = "thumbnail"
 
-    # metadata, that will be written
-    metadata: Dict = {}
-
-    # filepath, metadata will be written to
-    filepath: str
+    def __init__(self, downloader=None):
+        super().__init__(downloader)
+        self.metadata: dict = {}
 
     def run(self, info: Dict[str, Any]):
         self.metadata["artist"] = info["artist"]
@@ -100,8 +96,6 @@ class FilterPP(PostProcessor):
     """
     Filters unwanted songs.
     """
-
-    info: Dict[str, Any]
 
     def run(self, info: Dict[str, Any]):
         if not is_song(info):
