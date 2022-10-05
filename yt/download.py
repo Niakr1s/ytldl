@@ -114,7 +114,9 @@ class Downloader(YTMusic):
         print(f"keeped {len(keeped)} out of {len(video_ids)} songs")
         return (keeped, discarded)
 
-    def download_tracks(self, video_ids: List[str], after_download: Callable[[str], None] = None, limit: int = 0) -> list[str]:
+    def download_tracks(self, video_ids: List[str],
+                        after_download: Callable[[str], None] = None, on_discarded: Callable[[list[str]], None] = None,
+                        limit: int = 0) -> list[str]:
         """
         Downloads several tracks, based on their video_ids in thread pool.
         Uses set() to not to allow video_ids doublicates.
@@ -124,6 +126,8 @@ class Downloader(YTMusic):
 
         video_ids = set(video_ids)
         video_ids, discarded = self.filter_songs(video_ids)
+        if on_discarded:
+            on_discarded(discarded)
 
         if limit != 0:
             limit = min(limit, len(video_ids))
@@ -164,7 +168,7 @@ class Downloader(YTMusic):
         artist = self.get_artist(channel_id)
         return self.extract_video_ids(artist["songs"]["browseId"])
 
-    def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = [], limit: int = 0):
+    def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = [], limit: int = 0, *args, **kwargs):
         """
         Main method of this class.
         """
@@ -186,7 +190,8 @@ class Downloader(YTMusic):
 
         v = list(set(v))
         print(f"starting to download {len(v)} tracks")
-        downloaded_tracks = self.download_tracks(v, limit=limit)
+        downloaded_tracks = self.download_tracks(
+            v, limit=limit, *args, **kwargs)
         print(f"downloaded {len(downloaded_tracks)} tracks")
         return downloaded_tracks
 
@@ -201,7 +206,9 @@ class CacheDownloader(Downloader):
         print(f"download only uncached {len(uncached_video_ids)} tracks")
 
         downloaded_tracks = super().download_tracks(
-            uncached_video_ids, lambda x: self.cache.add_items([x]), *args, **kwargs)
+            uncached_video_ids,
+            after_download=lambda x: self.cache.add_items([x]), on_discarded=lambda x: self.cache.add_items(x),
+            *args, **kwargs)
         self.cache.add_items(commit=True)
         return downloaded_tracks
 
