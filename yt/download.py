@@ -103,8 +103,8 @@ class Downloader(YTMusic):
         if playlist == None:
             print("couldn't get songs from {}".format(playlist_id))
             return []
-        print("got songs from {}".format(playlist_id))
         tracks: List[Any] = playlist['tracks']
+        print(f"got {len(tracks)} songs from {playlist_id}")
         return map(lambda x: x['videoId'], tracks)
 
     def extract_video_ids_channel(self, channel_id: str) -> List[str]:
