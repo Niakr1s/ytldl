@@ -1,7 +1,7 @@
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 import pathlib
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 from yt_dlp import YoutubeDL
 from util.exxception import try_or
 from yt.cache import Cache, MemoryCache
@@ -19,7 +19,7 @@ class Downloader(YTMusic):
     Instantiate downloader instance:
        d = Downloader(download_dir=dir, auth_header_path)
 
-    Download. 
+    Download.
      :v
       VIDEO param video page's url:  https://music.youtube.com/watch?v=VIDEO
      :l
@@ -74,26 +74,30 @@ class Downloader(YTMusic):
             ydl.download([url])
             return video_id
 
-    def download_tracks(self, video_ids: List[str]) -> list[str]:
+    def download_tracks(self, video_ids: List[str], after_download: Callable[[str], None] = lambda x: x) -> list[str]:
         """
         Downloads several tracks, based on their video_ids in thread pool.
         Uses set() to not to allow video_ids doublicates.
+        after_download
         Returns list of downloaded tracks.
         """
         video_ids = set(video_ids)
         downloaded_video_ids = []
 
         with ThreadPoolExecutor() as executor:
-            futures: List[Future] = []
+            futures = []
             for video_id in video_ids:
-                futures.append(executor.submit(self.download_track, video_id))
+                futures.append(dict(future=executor.submit(
+                    self.download_track, video_id), video_id=video_id))
             for future in futures:
                 try:
-                    downloaded_video_id = future.result()
-                    downloaded_video_ids.append(downloaded_video_id)
+                    future["future"].result()
+                    downloaded_video_ids.append(future["video_id"])
+                    after_download(future["video_id"])
                 except FilterPPException:
                     # we adding those too, coz it's we who want to filter those
-                    downloaded_video_ids.append(downloaded_video_id)
+                    downloaded_video_ids.append(future["video_id"])
+                    after_download(future["video_id"])
                     print("skipping due to FilterPP")
                 except Exception as e:
                     print(f"couldn't download {video_id}: {e}")
@@ -152,8 +156,10 @@ class CacheDownloader(Downloader):
     def download_tracks(self, video_ids: List[str]):
         uncached_video_ids = self.cache.filter_uncached(video_ids)
         print(f"download only uncached {len(uncached_video_ids)} tracks")
-        downloaded_tracks = super().download_tracks(uncached_video_ids)
-        self.cache.add_items(downloaded_tracks)
+
+        downloaded_tracks = super().download_tracks(
+            uncached_video_ids, lambda x: self.cache.add_items([x]))
+        self.cache.add_items(commit=True)
         return downloaded_tracks
 
 

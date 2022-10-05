@@ -106,5 +106,5 @@ if __name__ == "__main__":
             match args.lib_action:
                 case 'update':
                     d = LibDownloader(download_dir=dir,
-                                      auth=settings_dir / auth_header_path, debug=args.debug, cache=SqliteCache(str(sqlite_path)))
+                                      auth=settings_dir / auth_header_path, debug=args.debug, cache=SqliteCache(str(sqlite_path), batch_size=100))
                     d.lib_update()
