@@ -4,3 +4,5 @@ tmp
 json
 headers_auth.json
 __pycache__
+run.cmd
+*.ipynb
