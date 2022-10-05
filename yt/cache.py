@@ -7,7 +7,7 @@ class Cache(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def add_item(self, item):
+    def add_items(self, items: list):
         pass
 
 
@@ -18,5 +18,5 @@ class MemoryCache(Cache):
     def is_in_cache(self, item) -> bool:
         return item in self.cache
 
-    def add_item(self, item):
-        self.cache.add(item)
+    def add_items(self, items: list):
+        self.cache.update(items)
