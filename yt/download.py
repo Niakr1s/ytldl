@@ -114,7 +114,7 @@ class Downloader(YTMusic):
         print(f"keeped {len(keeped)} out of {len(video_ids)} songs")
         return (keeped, discarded)
 
-    def download_tracks(self, video_ids: List[str], after_download: Callable[[str], None] = lambda x: x, limit: int = 0) -> list[str]:
+    def download_tracks(self, video_ids: List[str], after_download: Callable[[str], None] = None, limit: int = 0) -> list[str]:
         """
         Downloads several tracks, based on their video_ids in thread pool.
         Uses set() to not to allow video_ids doublicates.
@@ -140,7 +140,8 @@ class Downloader(YTMusic):
                 try:
                     future.result()
                     downloaded_video_ids.append(video_id)
-                    after_download(video_id)
+                    if after_download:
+                        after_download(video_id)
                 except Exception as e:
                     print(f"couldn't download {video_id}: {e}")
 
