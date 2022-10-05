@@ -40,8 +40,10 @@ class Downloader(YTMusic):
         },
     }
 
-    def __init__(self, download_dir: str, auth: str = None, user: str = None, requests_session=True, proxies: dict = None, language: str = 'en'):
+    def __init__(self, download_dir: str, auth: str = None, user: str = None, requests_session=True, proxies: dict = None, language: str = 'en',
+                 debug: bool = False):
         super().__init__(auth, user, requests_session, proxies, language)
+        self.debug = debug
         self.set_download_dir(download_dir)
 
     def set_download_dir(self, download_dir: str):
@@ -60,7 +62,8 @@ class Downloader(YTMusic):
                 ydl.add_post_processor(LyricsPP(), when='post_process')
                 ydl.add_post_processor(MetadataPP(), when='post_process')
 
-                ydl.download([url])
+                if not self.debug:
+                    ydl.download([url])
 
         except FilterPPException:
             print("skipping due to FilterPP")

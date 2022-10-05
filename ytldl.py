@@ -3,6 +3,7 @@ import pathlib
 from random import choices
 from typing import Dict
 from yt.download import Downloader
+import os
 
 
 def args() -> argparse.Namespace:
@@ -49,6 +50,9 @@ def args() -> argparse.Namespace:
         "-l", help="List from playlist page: https://music.youtube.com/playlist?list=LIST", nargs='*', default=[])
 
     res = parser.parse_args()
+
+    res.debug = "DEBUG" in os.environ
+
     return res
 
 
@@ -67,7 +71,7 @@ if __name__ == "__main__":
         case 'dl':
             dir = args.dir
             d = Downloader(download_dir=dir,
-                           auth=settings_dir / auth_header_path)
+                           auth=settings_dir / auth_header_path, debug=args.debug)
             d.download(v=args.v, l=args.l)
 
         case 'auth':

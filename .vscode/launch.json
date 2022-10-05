@@ -37,12 +37,15 @@
             "program": "${workspaceFolder}/ytldl.py",
             "console": "integratedTerminal",
             "justMyCode": false,
+            "env": {
+                "DEBUG": ""
+            },
             "args": [
                 "dl",
                 "-o",
                 "tmp",
                 "-v",
-                "pm9JyMiAU6A",
+                "_8g3bSHhKpE",
             ]
         }
     ]
