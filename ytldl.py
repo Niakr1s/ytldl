@@ -48,6 +48,8 @@ def args() -> argparse.Namespace:
         "-v",  help="Video from song page: https://music.youtube.com/watch?v=VIDEO", nargs='*', default=[])
     group.add_argument(
         "-l", help="List from playlist page: https://music.youtube.com/playlist?list=LIST", nargs='*', default=[])
+    group.add_argument(
+        "-c",  help="Video from channel page: https://music.youtube.com/channel/CHANNEL", nargs='*', default=[])
 
     # HOME
     home_parser = action_parsers.add_parser("home")
@@ -80,7 +82,7 @@ if __name__ == "__main__":
             dir = args.dir
             d = Downloader(download_dir=dir,
                            auth=settings_dir / auth_header_path, debug=args.debug)
-            d.download(v=args.v, l=args.l)
+            d.download(v=args.v, l=args.l, c=args.c)
 
         case 'auth':
             headers_raw = args.headers

@@ -23,7 +23,9 @@ class Downloader(YTMusic):
       VIDEO param video page's url:  https://music.youtube.com/watch?v=VIDEO
      :l
       LIST param of playlist page's url: https://music.youtube.com/playlist?list=LIST
-       d.download(v=args.v, l=args.l)
+     :c
+      CHANNEL param of artist page's url: https://music.youtube.com/channel/CHANNEL
+       d.download(v=args.v, l=args.l, c=args.c)
     """
 
     _ydl_opts = {
@@ -103,6 +105,10 @@ class Downloader(YTMusic):
         tracks: List[Any] = playlist['tracks']
         return map(lambda x: x['videoId'], tracks)
 
+    def extract_video_ids_channel(self, channel_id: str) -> List[str]:
+        artist = self.get_artist(channel_id)
+        return self.extract_video_ids(artist["songs"]["browseId"])
+
     # to use it, you should provide google auth headers
     # TODO: add explanation how to get them
     # returns download filepaths.
@@ -110,7 +116,7 @@ class Downloader(YTMusic):
         video_ids = self.extract_video_ids(playlist_id)
         self.download_tracks(video_ids)
 
-    def download(self, v: List[str] = [], l: List[str] = []):
+    def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = []):
         """
         Main method of this class.
         """
@@ -119,6 +125,9 @@ class Downloader(YTMusic):
             for playlist_id in l:
                 futures.append(executor.submit(
                     lambda x: self.extract_video_ids(x), playlist_id))
+            for channel_id in c:
+                futures.append(executor.submit(
+                    lambda x: self.extract_video_ids_channel(x), channel_id))
             for future in futures:
                 try:
                     res = future.result()

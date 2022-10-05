@@ -11,6 +11,9 @@
             "program": "${workspaceFolder}/ytldl.py",
             "console": "integratedTerminal",
             "justMyCode": false,
+            "env": {
+                "DEBUG": "",
+            },
             "args": [
                 "dl",
                 "-o",
@@ -27,7 +30,10 @@
                 "RDAOQWAKLFUHzBCn9nEsPHDYAw",
                 "RDAO8lA1ReXenlxIkYc_2VlKYQ",
                 "RDAMVMpm9JyMiAU6A",
-                "RDTMAK5uy_kskEGBYLWbdi3Z9IdjDoDEI8hEBvHEreM"
+                "RDTMAK5uy_kskEGBYLWbdi3Z9IdjDoDEI8hEBvHEreM",
+                "-c",
+                "UC_gksw7NEueO_u3lPL372hA",
+                "UCv8_ZHaN1nPlQfS8F2CRgYg"
             ]
         },
         {
