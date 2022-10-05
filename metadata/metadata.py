@@ -26,7 +26,10 @@ def write_metadata(filepath: str, metadata: Dict):
     if isinstance(file, MP4):
         file.tags["©ART"] = metadata["artist"]
         file.tags["©nam"] = metadata["title"]
-        file.tags["©lyr"] = metadata["lyrics"]
+
+        if "lyrics" in metadata:
+            file.tags["©lyr"] = metadata["lyrics"]
+
         file.tags["----:com.apple.iTunes:WWW"] = MP4FreeForm(
             metadata["url"].encode("utf-8"), dataformat=AtomDataType.UTF8)
 

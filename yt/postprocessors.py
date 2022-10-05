@@ -29,11 +29,19 @@ class LyricsPP(PostProcessor):
         return [], info
 
     def get_lyrics(self, video_id: str) -> str:
-        watch_playlist = self.yt.get_watch_playlist(video_id)
-        lyrics_browse_id = watch_playlist["lyrics"]
+        """
+        Shouldn't throw invalid key exception
+        """
+
+        lyrics_browse_id = self.yt.get_watch_playlist(video_id).get("lyrics")
+        if not lyrics_browse_id:
+            return ""
         self.write_debug("Got lyrics browseId={}".format(lyrics_browse_id))
 
-        lyrics: str = self.yt.get_lyrics(lyrics_browse_id)["lyrics"]
+        lyrics = self.yt.get_lyrics(lyrics_browse_id).get("lyrics")
+        if not lyrics:
+            return ""
+
         return lyrics
 
 
