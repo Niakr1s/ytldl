@@ -4,6 +4,7 @@ import pathlib
 from typing import Any, Dict, List
 from yt_dlp import YoutubeDL
 from util.exxception import try_or
+from yt.cache import Cache, MemoryCache
 from yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
@@ -135,9 +136,22 @@ class Downloader(YTMusic):
         self.download_tracks(v)
 
 
-class LibDownloader(Downloader):
-    def __init__(self, download_dir: str, auth: str = None, debug: bool = False):
-        super().__init__(download_dir, auth,  debug)
+class CacheDownloader(Downloader):
+    def __init__(self, download_dir: str, auth: str = None, debug: bool = False, cache: Cache = MemoryCache()):
+        super().__init__(download_dir, auth, debug)
+        self.cache = cache
+
+    def download_track(self, video_id: str):
+        if self.cache.is_in_cache(video_id):
+            print(f"{video_id} is in cache, skipping")
+            return
+
+        return super().download_track(video_id)
+
+
+class LibDownloader(CacheDownloader):
+    def __init__(self, download_dir: str, auth: str = None, debug: bool = False, cache: Cache = MemoryCache()):
+        super().__init__(download_dir, auth,  debug, cache=cache)
 
     def get_home_items(self, filter_titles: list) -> dict:
         """
