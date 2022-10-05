@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List
 from yt_dlp import YoutubeDL
 from util.exxception import try_or
 from yt.cache import Cache, MemoryCache
-from yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
+from yt.postprocessors import LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
 
@@ -54,6 +54,12 @@ class Downloader(YTMusic):
             self._ydl_opts['paths'] = {}
         self._ydl_opts['paths']['home'] = download_dir
 
+    def is_song(info: Dict[str, Any]) -> bool:
+        """
+        we want songs with artist and title
+        """
+        return all(k in info for k in ["artist", "title"])
+
     # returns download filepath
     def download_track(self, video_id: str) -> str:
         """
@@ -61,13 +67,19 @@ class Downloader(YTMusic):
         Returns videoId of downloaded track (same as input video_id).
         """
 
-        if self.debug:
-            return video_id
-
         url = "https://youtube.com/watch?v={}".format(video_id)
 
         with YoutubeDL(self._ydl_opts) as ydl:
-            ydl.add_post_processor(FilterPP(), when='pre_process')
+            info = ydl.extract_info(url, download=False)
+            is_song = Downloader.is_song(info)
+        if not is_song:
+            print(f"skipping {video_id}, it's not a song")
+            return video_id
+
+        if self.debug:
+            return video_id
+
+        with YoutubeDL(self._ydl_opts) as ydl:
             ydl.add_post_processor(LyricsPP(), when='post_process')
             ydl.add_post_processor(MetadataPP(), when='post_process')
 
@@ -94,11 +106,6 @@ class Downloader(YTMusic):
                     future["future"].result()
                     downloaded_video_ids.append(future["video_id"])
                     after_download(future["video_id"])
-                except FilterPPException:
-                    # we adding those too, coz it's we who want to filter those
-                    downloaded_video_ids.append(future["video_id"])
-                    after_download(future["video_id"])
-                    print("skipping due to FilterPP")
                 except Exception as e:
                     print(f"couldn't download {video_id}: {e}")
 
