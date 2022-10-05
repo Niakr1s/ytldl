@@ -127,15 +127,15 @@ class Downloader(YTMusic):
         downloaded_video_ids = []
 
         with ThreadPoolExecutor() as executor:
-            futures = []
+            futures = {}
             for video_id in video_ids:
-                futures.append(dict(future=executor.submit(
-                    self.download_track, video_id), video_id=video_id))
-            for future in futures:
+                futures[video_id] = executor.submit(
+                    self.download_track, video_id)
+            for video_id, future in futures.items():
                 try:
-                    future["future"].result()
-                    downloaded_video_ids.append(future["video_id"])
-                    after_download(future["video_id"])
+                    future.result()
+                    downloaded_video_ids.append(video_id)
+                    after_download(video_id)
                 except Exception as e:
                     print(f"couldn't download {video_id}: {e}")
 
