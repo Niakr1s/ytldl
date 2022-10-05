@@ -56,6 +56,9 @@ class Downloader(YTMusic):
 
     # returns download filepath
     def download_track(self, video_id: str):
+        if self.debug:
+            return
+
         url = "https://youtube.com/watch?v={}".format(video_id)
 
         try:
@@ -64,8 +67,7 @@ class Downloader(YTMusic):
                 ydl.add_post_processor(LyricsPP(), when='post_process')
                 ydl.add_post_processor(MetadataPP(), when='post_process')
 
-                if not self.debug:
-                    ydl.download([url])
+                ydl.download([url])
 
         except FilterPPException:
             print("skipping due to FilterPP")
