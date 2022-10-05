@@ -134,3 +134,12 @@ class Downloader(YTMusic):
         v = set(v)
         print("starting to download {} tracks".format(len(v)))
         self.download_tracks(v)
+
+
+class LibDownloader(Downloader):
+    def __init__(self, download_dir: str, auth: str = None, user: str = None, requests_session=True, proxies: dict = None, language: str = 'en', debug: bool = False):
+        super().__init__(download_dir, auth, user,
+                         requests_session, proxies, language, debug)
+
+    def lib_update(self):
+        print("Starting updating lib...")

@@ -2,7 +2,7 @@ import argparse
 import pathlib
 from random import choices
 from typing import Dict
-from yt.download import Downloader
+from yt.download import Downloader, LibDownloader
 import os
 
 
@@ -55,9 +55,13 @@ def args() -> argparse.Namespace:
     lib_parser = action_parsers.add_parser("lib")
     lib_parser.add_argument(
         "-o", "--dir", help="sets output directory", required=True)
-    lib_group = lib_parser.add_argument_group()
-    lib_group.add_argument(
-        "-u", "--update", help="Tries to download new tracks from home", action="store_true")
+
+    lib_action_parsers = lib_parser.add_subparsers(dest="lib_action")
+    lib_action_parsers.required = True
+    lib_action_parsers.choices = ["update"]
+
+    lib_action_update_parser = lib_action_parsers.add_parser(
+        "update")
 
     res = parser.parse_args()
 
@@ -88,3 +92,11 @@ if __name__ == "__main__":
             headers_raw = args.headers
             Downloader.setup(
                 settings_dir / auth_header_path, headers_raw)
+
+        case 'lib':
+            dir = args.dir
+            match args.lib_action:
+                case 'update':
+                    d = LibDownloader(download_dir=dir,
+                                      auth=settings_dir / auth_header_path, debug=args.debug)
+                    d.lib_update()
