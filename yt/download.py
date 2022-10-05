@@ -55,27 +55,15 @@ class Downloader(YTMusic):
             self._ydl_opts['paths'] = {}
         self._ydl_opts['paths']['home'] = download_dir
 
-    def is_song(info: Dict[str, Any]) -> bool:
-        """
-        we want songs with artist and title
-        """
-        return all(k in info for k in ["artist", "title"])
-
     # returns download filepath
+
     def download_track(self, video_id: str) -> str:
         """
         Raises FilterPPException if got filtered.
         Returns videoId of downloaded track (same as input video_id).
         """
 
-        url = "https://youtube.com/watch?v={}".format(video_id)
-
-        with YoutubeDL(self._ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            is_song = Downloader.is_song(info)
-        if not is_song:
-            print(f"skipping {video_id}, it's not a song")
-            return video_id
+        url = Downloader.to_url(video_id)
 
         if self.debug:
             return video_id
@@ -87,6 +75,40 @@ class Downloader(YTMusic):
             ydl.download([url])
             return video_id
 
+    def filter(self, video_id) -> bool:
+        """
+        Returns true, if intended to keep.
+        """
+        def is_song(info: Dict[str, Any]) -> bool:
+            return all(k in info for k in ["artist", "title"])
+
+        with YoutubeDL(self._ydl_opts) as ydl:
+            info = ydl.extract_info(
+                Downloader.to_url(video_id), download=False)
+            return is_song(info)
+
+    def to_url(video_id: str) -> str:
+        return f"https://youtube.com/watch?v={video_id}"
+
+    def filter_songs(self, video_ids: list[str]) -> list[str]:
+        filtered = []
+        with ThreadPoolExecutor() as executor:
+            futures = {}
+            for video_id in video_ids:
+                futures[video_id] = future = executor.submit(
+                    self.filter, video_id)
+            for video_id, future in futures.items():
+                try:
+                    keep = future.result()
+                    if keep:
+                        filtered.append(video_id)
+                    else:
+                        print(f"skipping {video_id}, it's not a song")
+                except Exception as e:
+                    print(f"couldn't get info {video_id}: {e}")
+        print(f"filtered {len(filtered)} out of {len(video_ids)} songs")
+        return filtered
+
     def download_tracks(self, video_ids: List[str], after_download: Callable[[str], None] = lambda x: x, limit: int = 0) -> list[str]:
         """
         Downloads several tracks, based on their video_ids in thread pool.
@@ -96,6 +118,7 @@ class Downloader(YTMusic):
         """
 
         video_ids = set(video_ids)
+        video_ids = self.filter_songs(video_ids)
 
         if limit != 0:
             limit = min(limit, len(video_ids))
