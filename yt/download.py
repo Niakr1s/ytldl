@@ -55,31 +55,33 @@ class Downloader(YTMusic):
         self._ydl_opts['paths']['home'] = download_dir
 
     # returns download filepath
-    def download_track(self, video_id: str):
+    def download_track(self, video_id: str) -> str:
+        """
+        Raises FilterPPException if got filtered.
+        Returns videoId of downloaded track (same as input video_id).
+        """
+
         if self.debug:
-            return
+            return video_id
 
         url = "https://youtube.com/watch?v={}".format(video_id)
 
-        try:
             with YoutubeDL(self._ydl_opts) as ydl:
                 ydl.add_post_processor(FilterPP(), when='pre_process')
                 ydl.add_post_processor(LyricsPP(), when='post_process')
                 ydl.add_post_processor(MetadataPP(), when='post_process')
 
                 ydl.download([url])
+            return video_id
 
-        except FilterPPException:
-            print("skipping due to FilterPP")
-        except Exception as e:
-            print("couldn't download {}: {}".format(video_id, e))
-
-    def download_tracks(self, video_ids: List[str]):
+    def download_tracks(self, video_ids: List[str]) -> list[str]:
         """
         Downloads several tracks, based on their video_ids in thread pool.
         Uses set() to not to allow video_ids doublicates.
+        Returns list of downloaded tracks.
         """
         video_ids = set(video_ids)
+        downloaded_video_ids = []
 
         def download_track(video_id: str):
             self.download_track(video_id)
@@ -90,9 +92,14 @@ class Downloader(YTMusic):
                 futures.append(executor.submit(download_track, video_id))
             for future in futures:
                 try:
-                    future.result()
+                    downloaded_video_id = future.result()
+                    downloaded_video_ids.append(downloaded_video_id)
+                except FilterPPException:
+                    print("skipping due to FilterPP")
                 except Exception as e:
-                    print("couldn't download video: {}".format(e))
+                    print(f"couldn't download {video_id}: {e}")
+
+        return downloaded_video_ids
 
     def extract_video_ids(self, playlist_id: str) -> List[str]:
         playlist = try_or(
@@ -132,8 +139,10 @@ class Downloader(YTMusic):
                         e, e.__class__))
 
         v = set(v)
-        print("starting to download {} tracks".format(len(v)))
-        self.download_tracks(v)
+        print(f"starting to download {len(v)} tracks")
+        downloaded_tracks = self.download_tracks(v)
+        print(f"downloaded {len(downloaded_tracks)} tracks")
+        return downloaded_tracks
 
 
 class CacheDownloader(Downloader):
@@ -141,12 +150,11 @@ class CacheDownloader(Downloader):
         super().__init__(download_dir, auth, debug)
         self.cache = cache
 
-    def download_track(self, video_id: str):
-        if self.cache.is_in_cache(video_id):
-            print(f"{video_id} is in cache, skipping")
-            return
-
-        return super().download_track(video_id)
+    def download_tracks(self, video_ids: List[str]):
+        uncached_video_ids = self.cache.filter_uncached(video_ids)
+        downloaded_tracks = super().download_tracks(uncached_video_ids)
+        self.cache.add_items(downloaded_tracks)
+        return downloaded_tracks
 
 
 class LibDownloader(CacheDownloader):
