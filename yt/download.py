@@ -90,8 +90,13 @@ class Downloader(YTMusic):
     def to_url(video_id: str) -> str:
         return f"https://youtube.com/watch?v={video_id}"
 
-    def filter_songs(self, video_ids: list[str]) -> list[str]:
-        filtered = []
+    def filter_songs(self, video_ids: list[str]) -> tuple[list[str], list[str]]:
+        """
+        Returns tuple[keeped, discarded]
+        """
+
+        keeped = []
+        discarded = []
         with ThreadPoolExecutor() as executor:
             futures = {}
             for video_id in video_ids:
@@ -101,13 +106,13 @@ class Downloader(YTMusic):
                 try:
                     keep = future.result()
                     if keep:
-                        filtered.append(video_id)
+                        keeped.append(video_id)
                     else:
-                        print(f"skipping {video_id}, it's not a song")
+                        discarded.append(video_id)
                 except Exception as e:
                     print(f"couldn't get info {video_id}: {e}")
-        print(f"filtered {len(filtered)} out of {len(video_ids)} songs")
-        return filtered
+        print(f"keeped {len(keeped)} out of {len(video_ids)} songs")
+        return (keeped, discarded)
 
     def download_tracks(self, video_ids: List[str], after_download: Callable[[str], None] = lambda x: x, limit: int = 0) -> list[str]:
         """
@@ -118,7 +123,7 @@ class Downloader(YTMusic):
         """
 
         video_ids = set(video_ids)
-        video_ids = self.filter_songs(video_ids)
+        video_ids, discarded = self.filter_songs(video_ids)
 
         if limit != 0:
             limit = min(limit, len(video_ids))
