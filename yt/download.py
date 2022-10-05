@@ -141,5 +141,35 @@ class LibDownloader(Downloader):
         super().__init__(download_dir, auth, user,
                          requests_session, proxies, language, debug)
 
+    def get_home_items(self, filter_titles: list) -> dict:
+        """
+        Returns home items in format of dict: { v: list, l: list, c: list }, that can be put into download function
+        """
+        home = self.get_home(limit=10)
+        if filter_titles:
+            home = list(filter(lambda x: x["title"] in filter_titles, home))
+
+        home_items = [
+            contents for home_item in home for contents in home_item["contents"]]
+
+        res = dict(v=[], l=[], c=[])
+
+        for home_item in home_items:
+            if "videoId" in home_item:
+                res['v'].append(home_item["videoId"])
+            if "subscribers" in home_item and "browseId" in home_item:
+                res['c'].append(home_item["browseId"])
+            if "playlistId" in home_item:
+                res["l"].append(home_item["playlistId"])
+
+        return res
+
+    personalised_home_titles = ["Listen again", "Mixed for you: moods",
+                                "Quick picks", "Mixed for you", "Forgotten favorites"]
+
     def lib_update(self):
         print("Starting updating lib...")
+        home_items = self.get_home_items(
+            filter_titles=LibDownloader.personalised_home_titles)
+
+        self.download(**home_items)
