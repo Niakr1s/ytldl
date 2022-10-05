@@ -42,7 +42,6 @@ class SqliteCache(Cache):
     def add_items(self, items: list):
         self.cur.executemany('INSERT OR IGNORE INTO "items" ("item") VALUES (?);', [
             [item] for item in items])
-
         self.con.commit()
 
     def create(path: str):

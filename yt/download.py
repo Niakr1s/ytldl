@@ -66,12 +66,12 @@ class Downloader(YTMusic):
 
         url = "https://youtube.com/watch?v={}".format(video_id)
 
-            with YoutubeDL(self._ydl_opts) as ydl:
-                ydl.add_post_processor(FilterPP(), when='pre_process')
-                ydl.add_post_processor(LyricsPP(), when='post_process')
-                ydl.add_post_processor(MetadataPP(), when='post_process')
+        with YoutubeDL(self._ydl_opts) as ydl:
+            ydl.add_post_processor(FilterPP(), when='pre_process')
+            ydl.add_post_processor(LyricsPP(), when='post_process')
+            ydl.add_post_processor(MetadataPP(), when='post_process')
 
-                ydl.download([url])
+            ydl.download([url])
             return video_id
 
     def download_tracks(self, video_ids: List[str]) -> list[str]:
@@ -83,13 +83,10 @@ class Downloader(YTMusic):
         video_ids = set(video_ids)
         downloaded_video_ids = []
 
-        def download_track(video_id: str):
-            self.download_track(video_id)
-
         with ThreadPoolExecutor() as executor:
             futures: List[Future] = []
             for video_id in video_ids:
-                futures.append(executor.submit(download_track, video_id))
+                futures.append(executor.submit(self.download_track, video_id))
             for future in futures:
                 try:
                     downloaded_video_id = future.result()
@@ -138,7 +135,7 @@ class Downloader(YTMusic):
                     print("skipping playlist, couldn't extract video ids: {} ({})".format(
                         e, e.__class__))
 
-        v = set(v)
+        v = list(set(v))
         print(f"starting to download {len(v)} tracks")
         downloaded_tracks = self.download_tracks(v)
         print(f"downloaded {len(downloaded_tracks)} tracks")
@@ -152,6 +149,7 @@ class CacheDownloader(Downloader):
 
     def download_tracks(self, video_ids: List[str]):
         uncached_video_ids = self.cache.filter_uncached(video_ids)
+        print(f"download only uncached {len(uncached_video_ids)} tracks")
         downloaded_tracks = super().download_tracks(uncached_video_ids)
         self.cache.add_items(downloaded_tracks)
         return downloaded_tracks

@@ -2,7 +2,7 @@ import argparse
 import pathlib
 from random import choices
 from typing import Dict
-from yt.cache import MemoryCache
+from yt.cache import MemoryCache, SqliteCache
 from yt.download import Downloader, LibDownloader
 import os
 
@@ -96,8 +96,15 @@ if __name__ == "__main__":
 
         case 'lib':
             dir = args.dir
+            ytldl_dir = pathlib.Path(dir) / ".ytldl"
+            ytldl_dir.mkdir(parents=True, exist_ok=True)
+            sqlite_path = pathlib.Path(dir) / ".ytldl" / "ytldl.db"
+
+            if not sqlite_path.exists():
+                SqliteCache.create(sqlite_path)
+
             match args.lib_action:
                 case 'update':
                     d = LibDownloader(download_dir=dir,
-                                      auth=settings_dir / auth_header_path, debug=args.debug, cache=MemoryCache(["EqnuF2WyhbU", "k5aga5_dyrU"]))
+                                      auth=settings_dir / auth_header_path, debug=args.debug, cache=SqliteCache(str(sqlite_path)))
                     d.lib_update()
