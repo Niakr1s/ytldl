@@ -47,6 +47,23 @@
                 "-v",
                 "_8g3bSHhKpE",
             ]
+        },
+        {
+            "name": "ytldl home",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/ytldl.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "DEBUG": ""
+            },
+            "args": [
+                "home",
+                "-o",
+                "tmp",
+                "-u",
+            ]
         }
     ]
 }

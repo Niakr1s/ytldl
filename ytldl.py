@@ -16,7 +16,7 @@ def args() -> argparse.Namespace:
         description="Programm to download songs and playlists from youtube.")
     action_parsers = parser.add_subparsers(dest="action")
     action_parsers.required = True
-    action_parsers.choices = ["auth", "dl"]
+    action_parsers.choices = ["auth", "dl", "home"]
 
     # AUTH
     auth_parser = action_parsers.add_parser("auth")
@@ -48,6 +48,14 @@ def args() -> argparse.Namespace:
         "-v",  help="Video from song page: https://music.youtube.com/watch?v=VIDEO", nargs='*', default=[])
     group.add_argument(
         "-l", help="List from playlist page: https://music.youtube.com/playlist?list=LIST", nargs='*', default=[])
+
+    # HOME
+    home_parser = action_parsers.add_parser("home")
+    home_parser.add_argument(
+        "-o", "--dir", help="sets output directory", required=True)
+    home_group = home_parser.add_argument_group()
+    home_group.add_argument(
+        "-u", "--update", help="Tries to download new tracks from home", action="store_true")
 
     res = parser.parse_args()
 
