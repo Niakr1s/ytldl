@@ -1,6 +1,7 @@
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 import pathlib
+import random
 from typing import Any, Callable, Dict, List
 from yt_dlp import YoutubeDL
 from util.exxception import try_or
@@ -86,14 +87,20 @@ class Downloader(YTMusic):
             ydl.download([url])
             return video_id
 
-    def download_tracks(self, video_ids: List[str], after_download: Callable[[str], None] = lambda x: x) -> list[str]:
+    def download_tracks(self, video_ids: List[str], after_download: Callable[[str], None] = lambda x: x, limit: int = 0) -> list[str]:
         """
         Downloads several tracks, based on their video_ids in thread pool.
         Uses set() to not to allow video_ids doublicates.
         after_download
         Returns list of downloaded tracks.
         """
+
         video_ids = set(video_ids)
+
+        if limit != 0:
+            limit = min(limit, len(video_ids))
+            video_ids = random.sample(video_ids, limit)
+
         downloaded_video_ids = []
 
         with ThreadPoolExecutor() as executor:
@@ -128,7 +135,7 @@ class Downloader(YTMusic):
         artist = self.get_artist(channel_id)
         return self.extract_video_ids(artist["songs"]["browseId"])
 
-    def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = []):
+    def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = [], limit: int = 0):
         """
         Main method of this class.
         """
@@ -150,7 +157,7 @@ class Downloader(YTMusic):
 
         v = list(set(v))
         print(f"starting to download {len(v)} tracks")
-        downloaded_tracks = self.download_tracks(v)
+        downloaded_tracks = self.download_tracks(v, limit=limit)
         print(f"downloaded {len(downloaded_tracks)} tracks")
         return downloaded_tracks
 
@@ -160,12 +167,12 @@ class CacheDownloader(Downloader):
         super().__init__(download_dir, auth, debug)
         self.cache = cache
 
-    def download_tracks(self, video_ids: List[str]):
+    def download_tracks(self, video_ids: List[str], *args, **kwargs):
         uncached_video_ids = self.cache.filter_uncached(video_ids)
         print(f"download only uncached {len(uncached_video_ids)} tracks")
 
         downloaded_tracks = super().download_tracks(
-            uncached_video_ids, lambda x: self.cache.add_items([x]))
+            uncached_video_ids, lambda x: self.cache.add_items([x]), *args, **kwargs)
         self.cache.add_items(commit=True)
         return downloaded_tracks
 
@@ -200,9 +207,9 @@ class LibDownloader(CacheDownloader):
     personalised_home_titles = ["Listen again", "Mixed for you: moods",
                                 "Quick picks", "Mixed for you", "Forgotten favorites"]
 
-    def lib_update(self):
+    def lib_update(self, limit: int = 0):
         print("Starting updating lib...")
         home_items = self.get_home_items(
             filter_titles=LibDownloader.personalised_home_titles)
 
-        self.download(**home_items)
+        self.download(**home_items, limit=limit)

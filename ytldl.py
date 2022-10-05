@@ -63,6 +63,8 @@ def args() -> argparse.Namespace:
 
     lib_action_update_parser = lib_action_parsers.add_parser(
         "update")
+    lib_action_update_parser.add_argument(
+        "-n", "--limit", help="Limit of downloaded tracks", default=0, type=int)
 
     res = parser.parse_args()
 
@@ -107,4 +109,4 @@ if __name__ == "__main__":
                 case 'update':
                     d = LibDownloader(download_dir=dir,
                                       auth=settings_dir / auth_header_path, debug=args.debug, cache=SqliteCache(str(sqlite_path), batch_size=100))
-                    d.lib_update()
+                    d.lib_update(limit=args.limit)
