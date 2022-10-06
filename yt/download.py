@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List
 from yt_dlp import YoutubeDL
 from util.exxception import try_or
 from yt.cache import Cache, MemoryCache
-from yt.postprocessors import LyricsPP, MetadataPP
+from yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
 
@@ -69,50 +69,15 @@ class Downloader(YTMusic):
             return video_id
 
         with YoutubeDL(self._ydl_opts) as ydl:
+            ydl.add_post_processor(FilterPP(), when='pre_process')
             ydl.add_post_processor(LyricsPP(), when='post_process')
             ydl.add_post_processor(MetadataPP(), when='post_process')
 
             ydl.download([url])
             return video_id
 
-    def filter(self, video_id) -> bool:
-        """
-        Returns true, if intended to keep.
-        """
-        def is_song(info: Dict[str, Any]) -> bool:
-            return all(k in info for k in ["artist", "title"])
-
-        with YoutubeDL(self._ydl_opts) as ydl:
-            info = ydl.extract_info(
-                Downloader.to_url(video_id), download=False)
-            return is_song(info)
-
     def to_url(video_id: str) -> str:
         return f"https://youtube.com/watch?v={video_id}"
-
-    def filter_songs(self, video_ids: list[str]) -> tuple[list[str], list[str]]:
-        """
-        Returns tuple[keeped, discarded]
-        """
-
-        keeped = []
-        discarded = []
-        with ThreadPoolExecutor() as executor:
-            futures = {}
-            for video_id in video_ids:
-                futures[video_id] = future = executor.submit(
-                    self.filter, video_id)
-            for video_id, future in futures.items():
-                try:
-                    keep = future.result()
-                    if keep:
-                        keeped.append(video_id)
-                    else:
-                        discarded.append(video_id)
-                except Exception as e:
-                    print(f"couldn't get info {video_id}: {e}")
-        print(f"keeped {len(keeped)} out of {len(video_ids)} songs")
-        return (keeped, discarded)
 
     def download_tracks(self, video_ids: List[str],
                         after_download: Callable[[str], None] = None, on_discarded: Callable[[list[str]], None] = None) -> list[str]:
@@ -124,9 +89,6 @@ class Downloader(YTMusic):
         """
 
         video_ids = set(video_ids)
-        video_ids, discarded = self.filter_songs(video_ids)
-        if on_discarded:
-            on_discarded(discarded)
 
         downloaded_video_ids = []
 
@@ -141,6 +103,9 @@ class Downloader(YTMusic):
                     downloaded_video_ids.append(video_id)
                     if after_download:
                         after_download(video_id)
+                except FilterPPException:
+                    print(f"discarding {video_id} due to FilterPP")
+                    on_discarded([video_id])
                 except Exception as e:
                     print(f"couldn't download {video_id}: {e}")
 

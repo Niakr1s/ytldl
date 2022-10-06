@@ -90,3 +90,24 @@ class MetadataPP(PostProcessor):
         self.write_debug(
             "Starting to write metadata to {}".format(self.filepath))
         write_metadata(self.filepath, self.metadata)
+
+
+def is_song(info: Dict[str, Any]) -> bool:
+    return all(k in info for k in ["artist", "title"])
+
+
+class FilterPPException(Exception):
+    pass
+
+
+class FilterPP(PostProcessor):
+    """
+    Filters unwanted songs.
+    """
+
+    info: Dict[str, Any]
+
+    def run(self, info: Dict[str, Any]):
+        if not is_song(info):
+            raise FilterPPException()
+        return [], info
