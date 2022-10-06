@@ -72,7 +72,7 @@ class SqliteCache(Cache):
         self.batch.extend(items)
 
         exceeds_batch_size = self.batch_size != 0 and len(
-            self.batch) > self.batch_size
+            self.batch) >= self.batch_size
 
         if self.batch_size == 0 or exceeds_batch_size:
             self._commit()
