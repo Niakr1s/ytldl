@@ -1,17 +1,18 @@
 from abc import ABCMeta, abstractmethod
 import sqlite3
+from typing import Iterable
 
 
 class Cache(metaclass=ABCMeta):
     @abstractmethod
-    def filter_uncached(self, item: list) -> list:
+    def filter_uncached(self, item: Iterable) -> set:
         """
         Should filter and return uncached items
         """
         pass
 
     @abstractmethod
-    def add_items(self, items: list):
+    def add_items(self, items: Iterable):
         """
         Should cache items.
         """
@@ -20,23 +21,33 @@ class Cache(metaclass=ABCMeta):
     @abstractmethod
     def commit(self):
         """
-        Should be called to finalize cache (write to disk etc).
+        Should be called to commit, if cache uses batches.
         """
         pass
 
+    @abstractmethod
+    def close(self):
+        """
+        Should be called to close connections to db.
+        """
+        self.commit()
+
 
 class MemoryCache(Cache):
-    def __init__(self, init_items: list = []):
+    def __init__(self, init_items: Iterable = []):
         self.cache = set(init_items)
 
-    def filter_uncached(self, items: list) -> list:
-        return list(self.cache.intersection(items))
+    def filter_uncached(self, items: Iterable) -> set:
+        return set(items) - self.cache
 
-    def add_items(self, items: list):
+    def add_items(self, items: Iterable):
         self.cache.update(items)
 
     def commit(self):
-        pass
+        super().commit()
+
+    def close(self):
+        super().close()
 
 
 class SqliteCache(Cache):
@@ -50,15 +61,24 @@ class SqliteCache(Cache):
         self.con = sqlite3.connect(path)
         self.cur = self.con.cursor()
 
-    def filter_uncached(self, items: list) -> list:
+    def filter_uncached(self, items: Iterable) -> set:
         in_str = ', '.join(["?"]*len(items))
         exec = self.cur.execute(
             f'SELECT item FROM items WHERE item IN ({in_str});', items)
-        cached = set([item[0] for item in exec.fetchall()])
+        cached = {item[0] for item in exec.fetchall()}
         uncached = set(items).difference(cached)
         return uncached
 
-    def _commit(self):
+    def add_items(self, items: Iterable):
+        self.batch.extend(items)
+
+        exceeds_batch_size = self.batch_size != 0 and len(
+            self.batch) >= self.batch_size
+
+        if self.batch_size == 0 or exceeds_batch_size:
+            self.commit()
+
+    def commit(self):
         """
         adds items in batch and clears it
         """
@@ -71,17 +91,9 @@ class SqliteCache(Cache):
         self.con.commit()
         self.batch = []
 
-    def add_items(self, items: list):
-        self.batch.extend(items)
-
-        exceeds_batch_size = self.batch_size != 0 and len(
-            self.batch) >= self.batch_size
-
-        if self.batch_size == 0 or exceeds_batch_size:
-            self._commit()
-
-    def commit(self):
-        self._commit()
+    def close(self):
+        super().close()
+        self.con.close()
 
     def create(path: str):
         con = sqlite3.connect(path)
