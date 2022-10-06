@@ -40,7 +40,7 @@ class Downloader(YTMusic):
             },
         ],
         'outtmpl': {
-            'default': '%(artist).30s - %(title).50s.%(ext)s',
+            'default': '%(artist).20s - %(title).50s [%(id)s].%(ext)s',
         },
     }
 
