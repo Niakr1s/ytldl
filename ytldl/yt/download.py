@@ -4,9 +4,9 @@ import pathlib
 import random
 from typing import Any, Callable, Dict, List
 from yt_dlp import YoutubeDL
-from util.exxception import try_or
-from yt.cache import Cache, MemoryCache
-from yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
+from ytldl.util.exxception import try_or
+from ytldl.yt.cache import Cache, MemoryCache
+from ytldl.yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
 

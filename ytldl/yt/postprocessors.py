@@ -1,6 +1,6 @@
 import pathlib
 import requests
-from metadata.metadata import write_metadata
+from ytldl.metadata.metadata import write_metadata
 from ytmusicapi import YTMusic
 from yt_dlp.postprocessor import PostProcessor
 from typing import Any, Dict, List

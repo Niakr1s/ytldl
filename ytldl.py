@@ -2,8 +2,9 @@ import argparse
 import pathlib
 from random import choices
 from typing import Dict
-from yt.cache import MemoryCache, SqliteCache
-from yt.download import Downloader, LibDownloader
+
+from ytldl.yt.cache import SqliteCache
+from ytldl.yt.download import Downloader, LibDownloader
 import os
 
 
