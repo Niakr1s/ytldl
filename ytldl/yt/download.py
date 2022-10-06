@@ -105,7 +105,8 @@ class Downloader(YTMusic):
                         after_download(video_id)
                 except FilterPPException:
                     print(f"discarding {video_id} due to FilterPP")
-                    on_discarded([video_id])
+                    if on_discarded:
+                        on_discarded([video_id])
                 except Exception as e:
                     print(f"couldn't download {video_id}: {e}")
 
