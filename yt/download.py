@@ -115,8 +115,7 @@ class Downloader(YTMusic):
         return (keeped, discarded)
 
     def download_tracks(self, video_ids: List[str],
-                        after_download: Callable[[str], None] = None, on_discarded: Callable[[list[str]], None] = None,
-                        limit: int = 0) -> list[str]:
+                        after_download: Callable[[str], None] = None, on_discarded: Callable[[list[str]], None] = None) -> list[str]:
         """
         Downloads several tracks, based on their video_ids in thread pool.
         Uses set() to not to allow video_ids doublicates.
@@ -128,10 +127,6 @@ class Downloader(YTMusic):
         video_ids, discarded = self.filter_songs(video_ids)
         if on_discarded:
             on_discarded(discarded)
-
-        if limit != 0:
-            limit = min(limit, len(video_ids))
-            video_ids = random.sample(video_ids, limit)
 
         downloaded_video_ids = []
 
@@ -151,35 +146,37 @@ class Downloader(YTMusic):
 
         return downloaded_video_ids
 
-    def extract_video_ids(self, playlist_id: str) -> List[str]:
+    def extract_video_ids(self, playlist_id: str, limit: int = 50) -> List[str]:
         playlist = try_or(
-            partial(Downloader.get_playlist, self, playlistId=playlist_id))
+            partial(Downloader.get_playlist, self, playlistId=playlist_id, limit=limit))
         if playlist == None:
             playlist = try_or(
-                partial(Downloader.get_watch_playlist, self, playlistId=playlist_id))
+                partial(Downloader.get_watch_playlist, self, playlistId=playlist_id, limit=limit))
         if playlist == None:
             print("couldn't get songs from {}".format(playlist_id))
             return []
         tracks: List[Any] = playlist['tracks']
+        tracks = tracks[:min(limit, len(tracks))]
         print(f"got {len(tracks)} songs from {playlist_id}")
         return map(lambda x: x['videoId'], tracks)
 
-    def extract_video_ids_channel(self, channel_id: str) -> List[str]:
+    def extract_video_ids_channel(self, channel_id: str, limit: int = 50) -> List[str]:
         artist = self.get_artist(channel_id)
-        return self.extract_video_ids(artist["songs"]["browseId"])
+        return self.extract_video_ids(artist["songs"]["browseId"], limit=limit)
 
-    def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = [], limit: int = 0, *args, **kwargs):
+    def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = [], limit: int = 50, *args, **kwargs):
         """
         Main method of this class.
+        Limit is max tracks per list or channel.
         """
         with ThreadPoolExecutor() as executor:
             futures: List[Future[List[str]]] = []
             for playlist_id in l:
                 futures.append(executor.submit(
-                    lambda x: self.extract_video_ids(x), playlist_id))
+                    lambda x: self.extract_video_ids(x, limit=limit), playlist_id))
             for channel_id in c:
                 futures.append(executor.submit(
-                    lambda x: self.extract_video_ids_channel(x), channel_id))
+                    lambda x: self.extract_video_ids_channel(x, limit=limit), channel_id))
             for future in futures:
                 try:
                     res = future.result()
@@ -190,8 +187,7 @@ class Downloader(YTMusic):
 
         v = list(set(v))
         print(f"starting to download {len(v)} tracks")
-        downloaded_tracks = self.download_tracks(
-            v, limit=limit, *args, **kwargs)
+        downloaded_tracks = self.download_tracks(v, *args, **kwargs)
         print(f"downloaded {len(downloaded_tracks)} tracks")
         return downloaded_tracks
 
@@ -243,7 +239,7 @@ class LibDownloader(CacheDownloader):
     personalised_home_titles = ["Listen again", "Mixed for you: moods",
                                 "Quick picks", "Mixed for you", "Forgotten favorites"]
 
-    def lib_update(self, limit: int = 0):
+    def lib_update(self, limit: int = 50):
         print("Starting updating lib...")
         home_items = self.get_home_items(
             filter_titles=LibDownloader.personalised_home_titles)

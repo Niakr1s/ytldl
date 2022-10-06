@@ -64,7 +64,7 @@ def args() -> argparse.Namespace:
     lib_action_update_parser = lib_action_parsers.add_parser(
         "update")
     lib_action_update_parser.add_argument(
-        "-n", "--limit", help="Limit of downloaded tracks", default=0, type=int)
+        "-n", "--limit", help="Limit of downloaded tracks per playlist or channel", default=50, type=int)
 
     res = parser.parse_args()
 
