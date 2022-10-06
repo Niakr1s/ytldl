@@ -63,6 +63,9 @@ class SqliteCache(Cache):
         adds items in batch and clears it
         """
         print(f"inserting {len(self.batch)} items into db")
+        if len(self.batch) == 0:
+            return
+
         self.cur.executemany('INSERT OR IGNORE INTO "items" ("item") VALUES (?);', [
             [item] for item in self.batch])
         self.con.commit()
