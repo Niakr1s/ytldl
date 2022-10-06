@@ -8,7 +8,7 @@ from ytldl.yt.download import Downloader, LibDownloader
 import os
 
 
-def args() -> argparse.Namespace:
+def parse_args() -> argparse.Namespace:
     """Returns:
     Namespace(action='dl', dir='d:\\tmp', v=None, l='abc')
     Namespace(action='auth', headers='my heders')
@@ -80,8 +80,8 @@ def make_settings_dir() -> str:
     return settings_dir
 
 
-if __name__ == "__main__":
-    args = args()
+def main():
+    args = parse_args()
     settings_dir = make_settings_dir()
     auth_header_path = settings_dir / "auth_headers.json"
 
@@ -111,3 +111,7 @@ if __name__ == "__main__":
                     d = LibDownloader(download_dir=dir,
                                       auth=settings_dir / auth_header_path, debug=args.debug, cache=SqliteCache(str(sqlite_path), batch_size=10))
                     d.lib_update(limit=args.limit)
+
+
+if __name__ == "__main__":
+    main()

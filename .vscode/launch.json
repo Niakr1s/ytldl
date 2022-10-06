@@ -8,7 +8,7 @@
             "name": "ytldl",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/ytldl.py",
+            "module": "ytldl",
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {
@@ -40,7 +40,7 @@
             "name": "ytldl single",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/ytldl.py",
+            "module": "ytldl",
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {
@@ -58,7 +58,7 @@
             "name": "ytldl lib",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/ytldl.py",
+            "module": "ytldl",
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {

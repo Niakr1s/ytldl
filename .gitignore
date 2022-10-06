@@ -8,3 +8,4 @@ run.cmd
 *.ipynb
 *egg-info
 build/*
+dist/*

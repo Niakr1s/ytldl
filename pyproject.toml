@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ytldl"
+version = "0.0.1"
+authors = [
+  { name="Niakr1s", email="pavel2188@gmail.com" },
+]
+description = "A small example package"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+packages = ["ytldl"]
+
+[project.scripts]
+ytldl = "ytldl.app:main"
+
+[project.urls]
+"Homepage" = "https://github.com/niakr1s/ytldl"
+"Bug Tracker" = "https://github.com/niakr1s/ytldl/issues"
+
