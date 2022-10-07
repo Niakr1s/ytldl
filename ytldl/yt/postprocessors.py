@@ -49,29 +49,23 @@ class MetadataPP(PostProcessor):
 
     THUMBNAIL = "thumbnail"
 
-    def __init__(self, downloader=None):
-        super().__init__(downloader)
-        self.metadata: dict = {}
-
     def run(self, info: Dict[str, Any]):
-        self.metadata["artist"] = info["artist"]
-        self.metadata["title"] = info["title"]
-        self.metadata["url"] = info["webpage_url"]
+        metadata = dict(artist=info.get("artist", ""),
+                        title=info.get("title", ""),
+                        url=info.get("webpage_url", ""),
+                        lyrics=info.get("lyrics", ""))
 
-        thumbnail = info[MetadataPP.THUMBNAIL]
+        thumbnail = info.get(MetadataPP.THUMBNAIL)
         if thumbnail:
-            self.metadata[MetadataPP.THUMBNAIL] = self.get_image_bytes(
+            metadata[MetadataPP.THUMBNAIL] = self.get_image_bytes(
                 thumbnail)
 
-        lyrics = info.get("lyrics")
-        if lyrics:
-            self.metadata["lyrics"] = lyrics
-
-        self.filepath = info["filepath"]
-
-        self.write_metadata()
+        filepath = info["filepath"]
+        self.write_debug(
+            "Starting to write metadata to {}".format(filepath))
+        write_metadata(filepath, metadata)
         self.to_screen(
-            "Wrote metadata to {}".format(self.filepath))
+            "Wrote metadata to {}".format(filepath))
 
         return [], info
 
@@ -81,11 +75,6 @@ class MetadataPP(PostProcessor):
         img_jpg = BytesIO()
         img.save(img_jpg, format=format)
         return img_jpg.getvalue()
-
-    def write_metadata(self):
-        self.write_debug(
-            "Starting to write metadata to {}".format(self.filepath))
-        write_metadata(self.filepath, self.metadata)
 
 
 def is_song(info: Dict[str, Any]) -> bool:
