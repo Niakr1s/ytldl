@@ -166,12 +166,16 @@ class LibDownloader(CacheDownloader):
 
         res = dict(videos=[], playlists=[], channels=[])
         for home_item in home_items:
-            if "videoId" in home_item:
-                res['videos'].append(home_item["videoId"])
             if "subscribers" in home_item and "browseId" in home_item:
                 res['channels'].append(home_item["browseId"])
-            if "playlistId" in home_item:
-                res["playlists"].append(home_item["playlistId"])
+                continue
+
+            video_id = home_item.get("videoId", None)
+            playlist_id = home_item.get("playlistId", None)
+            if video_id:
+                res['videos'].append(video_id)
+            if playlist_id:
+                res["playlists"].append(playlist_id)
         return res
 
     personalised_home_titles = ["Listen again", "Mixed for you: moods",
