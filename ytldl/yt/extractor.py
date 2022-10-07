@@ -34,6 +34,7 @@ class Extractor:
                     video_ids += future.result()
                 except Exception as e:
                     print(f"skipping playlist, couldn't extract video ids: {e}")
+            print(f"[Extractor] Extracted {len(video_ids)} videos")
             return (video_id for video_id in video_ids)
 
     def _extract_video_ids_from_playlist(self, playlist: str, /, limit: int = 50) -> Iterable[str]:
@@ -51,7 +52,7 @@ class Extractor:
                 raise Exception(f"couldn't get songs from {playlist}")
         tracks: list = contents['tracks']
         tracks = tracks[:min(limit, len(tracks))]
-        print(f"got {len(tracks)} songs from {playlist}")
+
         return (track['videoId'] for track in tracks)
 
     def extract_video_ids_from_channel(self, channel: str, /, limit: int = 50) -> Iterable[str]:
