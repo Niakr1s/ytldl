@@ -1,7 +1,8 @@
 import pathlib
 import shutil
 import unittest
-from ytldl.tests import consts
+
+from tests import consts
 from ytldl.yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 
 

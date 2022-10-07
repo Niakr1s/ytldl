@@ -1,9 +1,10 @@
 import pathlib
 import shutil
 import unittest
-from ytldl.tests import consts
-from ytldl.yt.postprocessors import FilterPPException
+
+from tests import consts
 from ytldl.yt.download import Downloader
+from ytldl.yt.postprocessors import FilterPPException
 
 
 class TestDownloader(unittest.TestCase):
