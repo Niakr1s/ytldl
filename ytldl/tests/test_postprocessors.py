@@ -11,13 +11,13 @@ class TestLyricsPP(unittest.TestCase):
         self.lyrics_pp = LyricsPP()
 
     def test_with_lyrics(self):
-        self.info["id"] = consts.VIDEO_ID_WITH_LYRICS
+        self.info["id"] = consts.VIDEO_ID_SONG_WITH_LYRICS
         _, info = self.lyrics_pp.run(self.info)
         self.assertIn("lyrics", info)
         self.assertTrue(info["lyrics"])
 
     def test_without_lyrics(self):
-        self.info["id"] = consts.VIDEO_ID_WITHOUT_LYRICS
+        self.info["id"] = consts.VIDEO_ID_SONG_WITHOUT_LYRICS
         _, info = self.lyrics_pp.run(self.info)
         self.assertIn("lyrics", info)
         self.assertFalse(info["lyrics"])

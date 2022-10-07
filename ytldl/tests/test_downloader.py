@@ -15,12 +15,12 @@ class TestDownloader(unittest.TestCase):
 
     def test_track_download_song_with_lyrics(self):
         d = Downloader(str(self.dir))
-        d.download_track(consts.VIDEO_ID_WITH_LYRICS)
+        d.download_track(consts.VIDEO_ID_SONG_WITH_LYRICS)
         self.assertTrue(len(list(self.dir.iterdir())) == 1)
 
     def test_track_download_song_without_lyrics(self):
         d = Downloader(str(self.dir))
-        d.download_track(consts.VIDEO_ID_WITHOUT_LYRICS)
+        d.download_track(consts.VIDEO_ID_SONG_WITHOUT_LYRICS)
         self.assertTrue(len(list(self.dir.iterdir())) == 1)
 
     def test_track_download_video(self):
