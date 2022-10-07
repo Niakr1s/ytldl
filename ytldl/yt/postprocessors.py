@@ -90,8 +90,6 @@ class FilterPP(PostProcessor):
     Filters unwanted songs.
     """
 
-    info: Dict[str, Any]
-
     def run(self, info: Dict[str, Any]):
         if not is_song(info):
             raise FilterPPException()
