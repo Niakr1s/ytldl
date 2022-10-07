@@ -130,30 +130,32 @@ class Downloader(YTMusic):
         artist = self.get_artist(channel_id)
         return self.extract_video_ids(artist["songs"]["browseId"], limit=limit)
 
-    def download(self, v: List[str] = [], l: List[str] = [], c: List[str] = [], limit: int = 50, *args, **kwargs):
+    def download(self, v: List[str] = None, l: List[str] = None, c: List[str] = None, limit: int = 50, *args, **kwargs):
         """
         Main method of this class.
         Limit is max tracks per list or channel.
         """
+        tracks_to_download = set()
+        tracks_to_download.update(v or [])
         with ThreadPoolExecutor() as executor:
             futures: List[Future[List[str]]] = []
-            for playlist_id in l:
+            for playlist_id in (l or []):
                 futures.append(executor.submit(
                     lambda x: self.extract_video_ids(x, limit=limit), playlist_id))
-            for channel_id in c:
+            for channel_id in (c or []):
                 futures.append(executor.submit(
                     lambda x: self.extract_video_ids_channel(x, limit=limit), channel_id))
             for future in futures:
                 try:
                     res = future.result()
-                    v.extend(res)
+                    tracks_to_download.add(res)
                 except Exception as e:
                     print("skipping playlist, couldn't extract video ids: {} ({})".format(
                         e, e.__class__))
 
-        v = list(set(v))
-        print(f"starting to download {len(v)} tracks")
-        downloaded_tracks = self.download_tracks(v, *args, **kwargs)
+        print(f"starting to download {len(tracks_to_download)} tracks")
+        downloaded_tracks = self.download_tracks(
+            tracks_to_download, *args, **kwargs)
         print(f"downloaded {len(downloaded_tracks)} tracks")
         return downloaded_tracks
 
