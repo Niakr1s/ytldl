@@ -22,11 +22,10 @@ def parse_args() -> argparse.Namespace:
 
     # AUTH
     auth_parser = action_parsers.add_parser("auth")
-    auth_parser.add_argument("headers", help="""How to get headers:
-    Open a new tab.
-    Open the developer tools (Ctrl-Shift-I) and select the “Network” tab. 
-    Go to https://music.youtube.com and ensure you are logged in. 
-    Find an authenticated POST request. The simplest way is to filter by /browse using the search bar of the developer tools. If you don’t see the request, try scrolling down a bit or clicking on the library button in the top bar. 
+    auth_parser.add_argument("headers", help="""How to get headers: Open a new tab. Open the developer tools ( 
+    Ctrl-Shift-I) and select the “Network” tab. Go to https://music.youtube.com and ensure you are logged in. Find an 
+    authenticated POST request. The simplest way is to filter by /browse using the search bar of the developer tools. 
+    If you don’t see the request, try scrolling down a bit or clicking on the library button in the top bar. 
 
     Firefox
 
@@ -35,8 +34,9 @@ def parse_args() -> argparse.Namespace:
 
     Chromium (Chrome/Edge)
 
-        Verify that the request looks like this: Status 200, Name browse?...
-        Click on the Name of any matching request. In the “Headers” tab, scroll to the section “Request headers” and copy everything starting from “accept: */*” to the end of the section
+        Verify that the request looks like this: Status 200, Name browse?... Click on the Name of any matching 
+        request. In the “Headers” tab, scroll to the section “Request headers” and copy everything starting from 
+        “accept: */*” to the end of the section 
 
     Then paste these headers here (surround with quotes: "YOUR HEADERS HERE").""")
 
