@@ -6,6 +6,7 @@ from typing import Callable, Iterable
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
+from ytldl.util.url import to_url
 from ytldl.yt.cache import Cache, MemoryCache
 from ytldl.yt.extractor import Extractor
 from ytldl.yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
@@ -65,7 +66,7 @@ class Downloader:
         Returns videoId of downloaded track (same as input video_id).
         """
 
-        url = Downloader.to_url(video_id)
+        url = to_url(video_id)
 
         if self.debug:
             return video_id
@@ -77,9 +78,6 @@ class Downloader:
 
             ydl.download([url])
             return video_id
-
-    def to_url(video_id: str) -> str:
-        return f"https://youtube.com/watch?v={video_id}"
 
     def download_tracks(self, videos: Iterable[str],
                         after_download: Callable[[str], None] = None,
