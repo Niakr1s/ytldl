@@ -19,11 +19,7 @@ class LyricsPP(PostProcessor):
 
     def run(self, info):
         video_id = info["id"]
-        lyrics = ""
-        try:
-            lyrics = self.get_lyrics(video_id)
-        except:
-            pass
+        lyrics = self.get_lyrics(video_id) or ""
         self.to_screen("Got lyrics with len={}".format(len(lyrics)))
         info["lyrics"] = lyrics
         return [], info
