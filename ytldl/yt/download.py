@@ -1,6 +1,8 @@
 import pathlib
+import signal
 from asyncio import Future
 from concurrent.futures import ThreadPoolExecutor
+from time import sleep
 from typing import Callable, Iterable
 
 from yt_dlp import YoutubeDL
@@ -47,10 +49,14 @@ class Downloader:
     }
 
     def __init__(self, download_dir: str, /, yt: YTMusic = YTMusic(), debug: bool = False):
+        self.stopped = False
         self.yt = yt
         self.extractor = Extractor(yt)
         self.debug = debug
         self.set_download_dir(download_dir)
+
+        signal.signal(signal.SIGINT, lambda *a: self.stop())
+        signal.signal(signal.SIGTERM, lambda *a: self.stop())
 
     def set_download_dir(self, download_dir: str):
         pathlib.Path(download_dir).mkdir(parents=True, exist_ok=True)
@@ -69,6 +75,7 @@ class Downloader:
         url = to_url(video_id)
 
         if self.debug:
+            sleep(1)
             return video_id
 
         with YoutubeDL(self._ydl_opts) as ydl:
@@ -102,6 +109,9 @@ class Downloader:
             for future in futures:
                 video_id: str = future.video_id
                 try:
+                    if self.stopped:
+                        executor.shutdown(wait=True, cancel_futures=True)
+
                     future.result()
                     if after_download:
                         after_download(video_id)
@@ -123,12 +133,18 @@ class Downloader:
         Main method of this class.
         Limit is max tracks per list or channel.
         """
+        self.stopped = False
+
         tracks_to_download = self.extractor.extract(
             videos=videos, playlists=playlists, channels=channels, limit=limit)
 
         downloaded_tracks = self.download_tracks(
             tracks_to_download, *args, **kwargs)
         return downloaded_tracks
+
+    def stop(self):
+        print("STOPPING...")
+        self.stopped = True
 
 
 class CacheDownloader(Downloader):
@@ -159,7 +175,8 @@ class LibDownloader(CacheDownloader):
         """
         home = self.yt.get_home(limit=10)
         if filter_titles:
-            home = [chapter for chapter in home if chapter["title"] in filter_titles]
+            home = [chapter for chapter in home if chapter["title"]
+                    in filter_titles]
 
         home_items = [
             contents for home_item in home for contents in home_item["contents"]]
