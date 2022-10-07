@@ -2,6 +2,7 @@ import pathlib
 import signal
 from asyncio import Future
 from concurrent.futures import ThreadPoolExecutor
+from os import PathLike
 from time import sleep
 from typing import Callable, Iterable
 
@@ -48,7 +49,7 @@ class Downloader:
         },
     }
 
-    def __init__(self, download_dir: str, /, yt: YTMusic = YTMusic(), debug: bool = False):
+    def __init__(self, download_dir: PathLike, /, yt: YTMusic = YTMusic(), debug: bool = False):
         self._stopped = False
         self._yt = yt
         self._extractor = Extractor(yt)
@@ -58,7 +59,7 @@ class Downloader:
         signal.signal(signal.SIGINT, lambda *a: self.stop())
         signal.signal(signal.SIGTERM, lambda *a: self.stop())
 
-    def _set_download_dir(self, download_dir: str):
+    def _set_download_dir(self, download_dir: PathLike):
         pathlib.Path(download_dir).mkdir(parents=True, exist_ok=True)
         if 'paths' not in self._ydl_opts:
             self._ydl_opts['paths'] = {}
@@ -148,7 +149,7 @@ class Downloader:
 
 
 class CacheDownloader(Downloader):
-    def __init__(self, download_dir: str, /, cache: Cache = MemoryCache(), *args, **kwargs):
+    def __init__(self, download_dir: PathLike, /, cache: Cache = MemoryCache(), *args, **kwargs):
         super().__init__(download_dir, *args, **kwargs)
         self._cache = cache
 
@@ -165,7 +166,7 @@ class CacheDownloader(Downloader):
 
 
 class LibDownloader(CacheDownloader):
-    def __init__(self, download_dir: str, *args, **kwargs):
+    def __init__(self, download_dir: PathLike, *args, **kwargs):
         super().__init__(download_dir, *args, **kwargs)
 
     def _get_home_items(self, filter_titles: list[str]) -> dict:

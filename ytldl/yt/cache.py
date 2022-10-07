@@ -1,5 +1,6 @@
 import sqlite3
 from abc import ABCMeta, abstractmethod
+from os import PathLike
 from typing import Iterable
 
 
@@ -96,7 +97,8 @@ class SqliteCache(Cache):
         super().close()
         self.con.close()
 
-    def create(path: str):
+    @staticmethod
+    def create(path: PathLike):
         con = sqlite3.connect(path)
         con.execute(
             "CREATE TABLE items(item varchar(50) UNIQUE NOT NULL);")

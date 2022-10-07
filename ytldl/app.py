@@ -1,6 +1,6 @@
 import argparse
 import os
-import pathlib
+from pathlib import Path
 
 from ytmusicapi import YTMusic
 
@@ -74,8 +74,8 @@ def parse_args() -> argparse.Namespace:
     return res
 
 
-def make_settings_dir() -> str:
-    settings_dir = pathlib.Path.home() / ".ytldl"
+def make_settings_dir() -> Path:
+    settings_dir = Path.home() / ".ytldl"
     settings_dir.mkdir(parents=True, exist_ok=True)
     return settings_dir
 
@@ -84,32 +84,32 @@ def main():
     args = parse_args()
     settings_dir = make_settings_dir()
     auth_header_path = settings_dir / "auth_headers.json"
+    auth_dir = settings_dir / auth_header_path
 
     match args.action:
         case 'dl':
-            yt = YTMusic(auth=settings_dir / auth_header_path)
-            dir = args.dir
-            d = Downloader(download_dir=dir, yt=yt, debug=args.debug)
+            yt = YTMusic(auth=str(auth_dir))
+            cwd_dir = Path(args.dir)
+            d = Downloader(cwd_dir, yt=yt, debug=args.debug)
             d.download(videos=args.v, playlists=args.l, channels=args.c)
 
         case 'auth':
             headers_raw = args.headers
-            Downloader.setup(
-                settings_dir / auth_header_path, headers_raw)
+            YTMusic.setup(str(auth_dir), headers_raw)
 
         case 'lib':
-            yt = YTMusic(auth=settings_dir / auth_header_path)
-            dir = args.dir
-            ytldl_dir = pathlib.Path(dir) / ".ytldl"
+            yt = YTMusic(auth=str(auth_dir))
+            cwd_dir = Path(args.dir)
+            ytldl_dir = cwd_dir / ".ytldl"
             ytldl_dir.mkdir(parents=True, exist_ok=True)
-            sqlite_path = pathlib.Path(dir) / ".ytldl" / "ytldl.db"
+            sqlite_path = cwd_dir / ".ytldl" / "ytldl.db"
 
             if not sqlite_path.exists():
                 SqliteCache.create(sqlite_path)
 
             match args.lib_action:
                 case 'update':
-                    d = LibDownloader(download_dir=dir, yt=yt, debug=args.debug,
+                    d = LibDownloader(download_dir=cwd_dir, yt=yt, debug=args.debug,
                                       cache=SqliteCache(str(sqlite_path), batch_size=10))
                     d.lib_update(limit=args.limit)
 
