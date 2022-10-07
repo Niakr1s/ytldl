@@ -63,7 +63,7 @@ class Downloader:
         pathlib.Path(download_dir).mkdir(parents=True, exist_ok=True)
         if 'paths' not in self._ydl_opts:
             self._ydl_opts['paths'] = {}
-        self._ydl_opts['paths']['home'] = download_dir
+        self._ydl_opts['paths']['home'] = str(download_dir)
 
     # returns download filepath
 
