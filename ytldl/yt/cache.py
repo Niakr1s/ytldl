@@ -1,5 +1,5 @@
-from abc import ABCMeta, abstractmethod
 import sqlite3
+from abc import ABCMeta, abstractmethod
 from typing import Iterable
 
 
@@ -62,7 +62,8 @@ class SqliteCache(Cache):
         self.cur = self.con.cursor()
 
     def filter_uncached(self, items: Iterable) -> set:
-        in_str = ', '.join(["?"]*len(items))
+        items = list(items)
+        in_str = ', '.join(["?"] * len(items))
         exec = self.cur.execute(
             f'SELECT item FROM items WHERE item IN ({in_str});', items)
         cached = {item[0] for item in exec.fetchall()}
@@ -99,20 +100,3 @@ class SqliteCache(Cache):
         con = sqlite3.connect(path)
         con.execute(
             "CREATE TABLE items(item varchar(50) UNIQUE NOT NULL);")
-
-
-if __name__ == "__main__":
-    # some tests for SqliteCache
-    import pathlib
-
-    db = pathlib.Path("d:/Projects/ytldl/tmp/.ytldl/ytldl.db")
-    db.parent.mkdir(exist_ok=True, parents=True)
-    try:
-        SqliteCache.create(db)
-    except Exception:
-        pass
-
-    cache = SqliteCache(str(db))
-    cache.add_items([str(i) for i in range(10)])
-    uncached = cache.filter_uncached([str(i+5) for i in range(10)])
-    print(uncached)

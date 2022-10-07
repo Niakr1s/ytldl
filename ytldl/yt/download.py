@@ -1,16 +1,17 @@
-from concurrent.futures import Future, ThreadPoolExecutor
-from functools import partial
 import pathlib
-import random
-from typing import Any, Callable, Dict, List
+from asyncio import Future
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Iterable
+
 from yt_dlp import YoutubeDL
-from ytldl.util.exxception import try_or
-from ytldl.yt.cache import Cache, MemoryCache
-from ytldl.yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 from ytmusicapi import YTMusic
 
+from ytldl.yt.cache import Cache, MemoryCache
+from ytldl.yt.extractor import Extractor
+from ytldl.yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 
-class Downloader(YTMusic):
+
+class Downloader:
     """
     Downloads tracks.
 
@@ -44,8 +45,9 @@ class Downloader(YTMusic):
         },
     }
 
-    def __init__(self, download_dir: str, auth: str = None, debug: bool = False):
-        super().__init__(auth)
+    def __init__(self, download_dir: str, /, yt: YTMusic = YTMusic(), debug: bool = False):
+        self.yt = yt
+        self.extractor = Extractor(yt)
         self.debug = debug
         self.set_download_dir(download_dir)
 
@@ -79,129 +81,99 @@ class Downloader(YTMusic):
     def to_url(video_id: str) -> str:
         return f"https://youtube.com/watch?v={video_id}"
 
-    def download_tracks(self, video_ids: List[str],
-                        after_download: Callable[[str], None] = None, on_discarded: Callable[[list[str]], None] = None) -> list[str]:
+    def download_tracks(self, videos: Iterable[str],
+                        after_download: Callable[[str], None] = None,
+                        on_discarded: Callable[[Iterable[str]], None] = None) \
+            -> Iterable[str]:
         """
-        Downloads several tracks, based on their video_ids in thread pool.
-        Uses set() to not to allow video_ids doublicates.
-        after_download
+        Downloads several tracks, based on their videoIds in thread pool.
+        Uses set() to not to allow video_ids duplicates.
         Returns list of downloaded tracks.
         """
 
-        video_ids = set(video_ids)
-
-        downloaded_video_ids = []
-
+        downloaded_videos = []
+        videos = set(videos)
         with ThreadPoolExecutor() as executor:
-            futures = {}
-            for video_id in video_ids:
-                futures[video_id] = executor.submit(
+            futures: list[Future] = []
+            for video_id in videos:
+                future = executor.submit(
                     self.download_track, video_id)
-            for video_id, future in futures.items():
+                future.video_id = video_id
+                futures.append(future)
+
+            for future in futures:
+                video_id: str = future.video_id
                 try:
                     future.result()
-                    downloaded_video_ids.append(video_id)
                     if after_download:
                         after_download(video_id)
+                    downloaded_videos.append(video_id)
                 except FilterPPException:
                     print(f"discarding {video_id} due to FilterPP")
                     if on_discarded:
                         on_discarded([video_id])
                 except Exception as e:
                     print(f"couldn't download {video_id}: {e}")
+        return iter(downloaded_videos)
 
-        return downloaded_video_ids
-
-    def extract_video_ids(self, playlist_id: str, limit: int = 50) -> List[str]:
-        playlist = try_or(
-            partial(Downloader.get_playlist, self, playlistId=playlist_id, limit=limit))
-        if playlist == None:
-            playlist = try_or(
-                partial(Downloader.get_watch_playlist, self, playlistId=playlist_id, limit=limit))
-        if playlist == None:
-            print("couldn't get songs from {}".format(playlist_id))
-            return []
-        tracks: List[Any] = playlist['tracks']
-        tracks = tracks[:min(limit, len(tracks))]
-        print(f"got {len(tracks)} songs from {playlist_id}")
-        return map(lambda x: x['videoId'], tracks)
-
-    def extract_video_ids_channel(self, channel_id: str, limit: int = 50) -> List[str]:
-        artist = self.get_artist(channel_id)
-        return self.extract_video_ids(artist["songs"]["browseId"], limit=limit)
-
-    def download(self, v: List[str] = None, l: List[str] = None, c: List[str] = None, limit: int = 50, *args, **kwargs):
+    def download(self,
+                 videos: Iterable[str] = None,
+                 playlists: Iterable[str] = None,
+                 channels: Iterable[str] = None,
+                 limit: int = 50, *args, **kwargs):
         """
         Main method of this class.
         Limit is max tracks per list or channel.
         """
-        tracks_to_download = set()
-        tracks_to_download.update(v or [])
-        with ThreadPoolExecutor() as executor:
-            futures: List[Future[List[str]]] = []
-            for playlist_id in (l or []):
-                futures.append(executor.submit(
-                    lambda x: self.extract_video_ids(x, limit=limit), playlist_id))
-            for channel_id in (c or []):
-                futures.append(executor.submit(
-                    lambda x: self.extract_video_ids_channel(x, limit=limit), channel_id))
-            for future in futures:
-                try:
-                    res = future.result()
-                    tracks_to_download.add(res)
-                except Exception as e:
-                    print("skipping playlist, couldn't extract video ids: {} ({})".format(
-                        e, e.__class__))
+        tracks_to_download = self.extractor.extract(
+            videos=videos, playlists=playlists, channels=channels, limit=limit)
 
-        print(f"starting to download {len(tracks_to_download)} tracks")
         downloaded_tracks = self.download_tracks(
             tracks_to_download, *args, **kwargs)
-        print(f"downloaded {len(downloaded_tracks)} tracks")
         return downloaded_tracks
 
 
 class CacheDownloader(Downloader):
-    def __init__(self, download_dir: str, auth: str = None, debug: bool = False, cache: Cache = MemoryCache()):
-        super().__init__(download_dir, auth, debug)
+    def __init__(self, download_dir: str, /, cache: Cache = MemoryCache(), *args, **kwargs):
+        super().__init__(download_dir, *args, **kwargs)
         self.cache = cache
 
-    def download_tracks(self, video_ids: List[str], *args, **kwargs):
-        uncached_video_ids = self.cache.filter_uncached(video_ids)
+    def download_tracks(self, videos: Iterable[str], **kwargs) -> Iterable[str]:
+        uncached_video_ids = self.cache.filter_uncached(videos)
         print(f"download only uncached {len(uncached_video_ids)} tracks")
 
         downloaded_tracks = super().download_tracks(
             uncached_video_ids,
-            after_download=lambda x: self.cache.add_items([x]), on_discarded=lambda x: self.cache.add_items(x),
-            *args, **kwargs)
+            after_download=lambda x: self.cache.add_items([x]),
+            on_discarded=lambda x: self.cache.add_items(x))
         self.cache.commit()
         return downloaded_tracks
 
 
 class LibDownloader(CacheDownloader):
-    def __init__(self, download_dir: str, auth: str = None, debug: bool = False, cache: Cache = MemoryCache()):
-        super().__init__(download_dir, auth,  debug, cache=cache)
+    def __init__(self, download_dir: str, *args, **kwargs):
+        super().__init__(download_dir, *args, **kwargs)
 
-    def get_home_items(self, filter_titles: list) -> dict:
+    def get_home_items(self, filter_titles: list[str]) -> dict:
         """
-        Returns home items in format of dict: { v: list, l: list, c: list }, that can be put into download function
+        Returns home items in format of { videos, playlists, channels },
+            that can be put into download function
         """
-        home = self.get_home(limit=10)
+        home = self.yt.get_home(limit=10)
         if filter_titles:
-            home = list(filter(lambda x: x["title"] in filter_titles, home))
+            home = [chapter for chapter in home if chapter["title"] in filter_titles]
 
         home_items = [
             contents for home_item in home for contents in home_item["contents"]]
 
-        res = dict(v=[], l=[], c=[])
-
+        res = dict(videos=[], playlists=[], channels=[])
         for home_item in home_items:
             if "videoId" in home_item:
-                res['v'].append(home_item["videoId"])
+                res['videos'].append(home_item["videoId"])
             if "subscribers" in home_item and "browseId" in home_item:
-                res['c'].append(home_item["browseId"])
+                res['channels'].append(home_item["browseId"])
             if "playlistId" in home_item:
-                res["l"].append(home_item["playlistId"])
-
+                res["playlists"].append(home_item["playlistId"])
         return res
 
     personalised_home_titles = ["Listen again", "Mixed for you: moods",
@@ -210,6 +182,7 @@ class LibDownloader(CacheDownloader):
     def lib_update(self, limit: int = 50):
         print("Starting updating lib...")
         home_items = self.get_home_items(
-            filter_titles=LibDownloader.personalised_home_titles)
+            filter_titles=self.personalised_home_titles)
 
-        self.download(**home_items, limit=limit)
+        downloaded_tracks = list(self.download(**home_items, limit=limit))
+        print(f"Downloaded {sum(1 for i in downloaded_tracks)} tracks")

@@ -1,11 +1,11 @@
 import argparse
+import os
 import pathlib
-from random import choices
-from typing import Dict
+
+from ytmusicapi import YTMusic
 
 from ytldl.yt.cache import SqliteCache
 from ytldl.yt.download import Downloader, LibDownloader
-import os
 
 
 def parse_args() -> argparse.Namespace:
@@ -47,11 +47,11 @@ def parse_args() -> argparse.Namespace:
     group = dl_parser.add_argument_group()
     group.required = True
     group.add_argument(
-        "-v",  help="Video from song page: https://music.youtube.com/watch?v=VIDEO", nargs='*', default=[])
+        "-v", help="Video from song page: https://music.youtube.com/watch?v=VIDEO", nargs='*', default=[])
     group.add_argument(
         "-l", help="List from playlist page: https://music.youtube.com/playlist?list=LIST", nargs='*', default=[])
     group.add_argument(
-        "-c",  help="Video from channel page: https://music.youtube.com/channel/CHANNEL", nargs='*', default=[])
+        "-c", help="Video from channel page: https://music.youtube.com/channel/CHANNEL", nargs='*', default=[])
 
     # LIB
     lib_parser = action_parsers.add_parser("lib")
@@ -87,10 +87,10 @@ def main():
 
     match args.action:
         case 'dl':
+            yt = YTMusic(auth=settings_dir / auth_header_path)
             dir = args.dir
-            d = Downloader(download_dir=dir,
-                           auth=settings_dir / auth_header_path, debug=args.debug)
-            d.download(v=args.v, l=args.l, c=args.c)
+            d = Downloader(download_dir=dir, yt=yt, debug=args.debug)
+            d.download(videos=args.v, playlists=args.l, channels=args.c)
 
         case 'auth':
             headers_raw = args.headers
@@ -98,6 +98,7 @@ def main():
                 settings_dir / auth_header_path, headers_raw)
 
         case 'lib':
+            yt = YTMusic(auth=settings_dir / auth_header_path)
             dir = args.dir
             ytldl_dir = pathlib.Path(dir) / ".ytldl"
             ytldl_dir.mkdir(parents=True, exist_ok=True)
@@ -108,8 +109,8 @@ def main():
 
             match args.lib_action:
                 case 'update':
-                    d = LibDownloader(download_dir=dir,
-                                      auth=settings_dir / auth_header_path, debug=args.debug, cache=SqliteCache(str(sqlite_path), batch_size=10))
+                    d = LibDownloader(download_dir=dir, yt=yt, debug=args.debug,
+                                      cache=SqliteCache(str(sqlite_path), batch_size=10))
                     d.lib_update(limit=args.limit)
 
 

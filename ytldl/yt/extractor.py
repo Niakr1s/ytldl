@@ -28,13 +28,13 @@ class Extractor:
             for channel in (channels or ()):
                 futures.append(executor.submit(
                     self.extract_video_ids_from_channel, channel, limit=limit))
-            video_ids_list: list[Iterable[str]] = list(videos or ())
+            video_ids: list[str] = list(videos or ())
             for future in as_completed(futures):
                 try:
-                    video_ids_list += future.result()
+                    video_ids += future.result()
                 except Exception as e:
                     print(f"skipping playlist, couldn't extract video ids: {e}")
-            return (video_id for video_ids in video_ids_list for video_id in video_ids)
+            return (video_id for video_id in video_ids)
 
     def _extract_video_ids_from_playlist(self, playlist: str, /, limit: int = 50) -> Iterable[str]:
         """
@@ -43,14 +43,13 @@ class Extractor:
         """
 
         try:
-            playlist = self.yt.get_playlist(playlistId=playlist, limit=limit)
+            contents = self.yt.get_playlist(playlistId=playlist, limit=limit)
         except Exception:
             try:
-                playlist = self.yt.get_watch_playlist(playlistId=playlist, limit=limit)
+                contents = self.yt.get_watch_playlist(playlistId=contents, limit=limit)
             except Exception as e:
-                print(f"couldn't get songs from {playlist}")
                 raise Exception(f"couldn't get songs from {playlist}")
-        tracks: list = playlist['tracks']
+        tracks: list = contents['tracks']
         tracks = tracks[:min(limit, len(tracks))]
         print(f"got {len(tracks)} songs from {playlist}")
         return (track['videoId'] for track in tracks)

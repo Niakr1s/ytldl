@@ -1,11 +1,12 @@
-import pathlib
-import requests
-from ytldl.metadata.metadata import write_metadata
-from ytmusicapi import YTMusic
-from yt_dlp.postprocessor import PostProcessor
-from typing import Any, Dict, List
-from PIL import Image
 from io import BytesIO
+from typing import Any, Dict
+
+import requests
+from PIL import Image
+from yt_dlp.postprocessor import PostProcessor
+from ytmusicapi import YTMusic
+
+from ytldl.metadata.metadata import write_metadata
 
 
 class LyricsPP(PostProcessor):
