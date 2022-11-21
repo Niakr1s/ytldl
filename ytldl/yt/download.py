@@ -196,8 +196,14 @@ class LibDownloader(CacheDownloader):
                 res["playlists"].append(playlist_id)
         return res
 
-    _personalised_home_titles = ["Listen again", "Mixed for you: moods",
-                                 "Quick picks", "Mixed for you", "Forgotten favorites"]
+    # TODO: add to settings etc
+    _personalised_home_titles = [
+        # "Listen again", # I don't like "Listen again" section, coz it's download too much monotonous music.
+        "Mixed for you: moods",
+        "Quick picks",
+        "Mixed for you",
+        "Forgotten favorites",
+    ]
 
     def lib_update(self, limit: int = 50):
         print("Starting updating lib...")
