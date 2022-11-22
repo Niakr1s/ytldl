@@ -169,12 +169,28 @@ class LibDownloader(CacheDownloader):
     def __init__(self, download_dir: PathLike, *args, **kwargs):
         super().__init__(download_dir, *args, **kwargs)
 
+    # TODO: add to settings etc
+    _personalised_home_titles = [
+        # "Listen again", # I don't like "Listen again" section, coz it's download too much monotonous music.
+        "Mixed for you: moods",
+        "Quick picks",
+        "Mixed for you",
+        "Forgotten favorites",
+    ]
+
+    _skip_home_title_items = [
+        'Discover Mix',
+        'Your Likes',
+        'Replay Mix',
+        'New Release Mix',
+    ]
+
     def _get_home_items(self, filter_titles: list[str]) -> dict:
         """
         Returns home items in format of { videos, playlists, channels },
             that can be put into download function
         """
-        home = self._yt.get_home(limit=10)
+        home = self._yt.get_home(limit=100)
         if filter_titles:
             home = [chapter for chapter in home if chapter["title"]
                     in filter_titles]
@@ -184,6 +200,8 @@ class LibDownloader(CacheDownloader):
 
         res = dict(videos=[], playlists=[], channels=[])
         for home_item in home_items:
+            title = home_item["title"]
+
             if "subscribers" in home_item and "browseId" in home_item:
                 res['channels'].append(home_item["browseId"])
                 continue
@@ -193,17 +211,12 @@ class LibDownloader(CacheDownloader):
             if video_id:
                 res['videos'].append(video_id)
             if playlist_id:
+                if title in self._skip_home_title_items:
+                    print(f"Skipping playlist {title}")
+                    continue
                 res["playlists"].append(playlist_id)
+        print(f"Extracted items: {res}")
         return res
-
-    # TODO: add to settings etc
-    _personalised_home_titles = [
-        # "Listen again", # I don't like "Listen again" section, coz it's download too much monotonous music.
-        "Mixed for you: moods",
-        "Quick picks",
-        "Mixed for you",
-        "Forgotten favorites",
-    ]
 
     def lib_update(self, limit: int = 50):
         print("Starting updating lib...")
