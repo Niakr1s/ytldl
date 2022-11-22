@@ -42,10 +42,15 @@ class TestLibDownloader(unittest.TestCase):
         self.dir.mkdir(parents=True, exist_ok=True)
 
     def test_get_home_items(self):
-        d = LibDownloader(str(self.dir),
-                          yt=YTMusic(auth=str(pathlib.Path.home() / ".ytldl" / "auth_headers.json")))
-        home_items = d._get_home_items(LibDownloader._personalised_home_titles)
-        print(home_items)
+        auth_headers_path = pathlib.Path.home() / ".ytldl" / "auth_headers.json"
+        try:
+            yt = YTMusic(auth=str(auth_headers_path))
+        except:
+            print("Caution: No headers provided! Try 'ytldl auth -h [HEADERS] before, test will continue without it.'")
+            yt = YTMusic()
+
+        d = LibDownloader(str(self.dir), yt=YTMusic(auth=str(auth_headers_path)))
+        d._get_home_items(LibDownloader._personalised_home_titles)
 
     def tearDown(self):
         shutil.rmtree(self.dir)
