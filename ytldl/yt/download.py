@@ -203,19 +203,22 @@ class LibDownloader(CacheDownloader):
             title = home_item["title"]
 
             if "subscribers" in home_item and "browseId" in home_item:
-                res['channels'].append(home_item["browseId"])
+                browse_id = home_item["browseId"]
+                print(f"Appending channel {title} with browseId {browse_id}")
+                res['channels'].append(browse_id)
                 continue
 
             video_id = home_item.get("videoId", None)
             playlist_id = home_item.get("playlistId", None)
             if video_id:
+                print(f"Appending video {title} with videoId {video_id}")
                 res['videos'].append(video_id)
             if playlist_id:
                 if title in self._skip_home_title_items:
-                    print(f"Skipping playlist {title}")
+                    print(f"Skipping playlist {title} with playlist_id {playlist_id}")
                     continue
+                print(f"Appending playlist {title} with playlist_id {playlist_id}")
                 res["playlists"].append(playlist_id)
-        print(f"Extracted items: {res}")
         return res
 
     def lib_update(self, limit: int = 50):
