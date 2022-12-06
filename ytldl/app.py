@@ -104,9 +104,6 @@ def main():
             ytldl_dir.mkdir(parents=True, exist_ok=True)
             sqlite_path = cwd_dir / ".ytldl" / "ytldl.db"
 
-            if not sqlite_path.exists():
-                SqliteCache.create(sqlite_path)
-
             match args.lib_action:
                 case 'update':
                     d = LibDownloader(download_dir=cwd_dir, yt=yt, debug=args.debug,

@@ -1,6 +1,6 @@
+import pathlib
 import sqlite3
 from abc import ABCMeta, abstractmethod
-from os import PathLike
 from typing import Iterable
 
 
@@ -58,8 +58,14 @@ class SqliteCache(Cache):
         """
         self.batch_size = batch_size
         self.batch = []
+        self.path = pathlib.Path(path)
+        path_existed = self.path.exists()
 
         self.con = sqlite3.connect(path)
+        if not path_existed:
+            self._create_v1()
+        self._try_migrate()
+
         self.cur = self.con.cursor()
 
     def filter_uncached(self, items: Iterable) -> set:
@@ -88,7 +94,7 @@ class SqliteCache(Cache):
         if len(self.batch) == 0:
             return
 
-        self.cur.executemany('INSERT OR IGNORE INTO "items" ("item") VALUES (?);', [
+        self.cur.executemany('INSERT OR IGNORE INTO "items" ("item", "time") VALUES (?, CURRENT_TIMESTAMP);', [
             [item] for item in self.batch])
         self.con.commit()
         self.batch = []
@@ -97,8 +103,18 @@ class SqliteCache(Cache):
         super().close()
         self.con.close()
 
-    @staticmethod
-    def create(path: PathLike):
-        con = sqlite3.connect(path)
-        con.execute(
-            "CREATE TABLE items(item varchar(50) UNIQUE NOT NULL);")
+    def _create_v1(self):
+        self.con.execute(
+            'CREATE TABLE "items" ("item" varchar(50) UNIQUE NOT NULL);')
+        self.con.commit()
+
+    def _try_migrate(self):
+        try:
+            self.con.execute('ALTER TABLE "items" ADD COLUMN "time" timestamp DEFAULT NULL;')
+        except sqlite3.OperationalError as e:
+            is_duplicate = str(e).find("duplicate column") != -1
+            if not is_duplicate:
+                raise e
+        finally:
+            self.con.execute('UPDATE "items" SET "time" = CURRENT_TIMESTAMP;')
+            self.con.commit()

@@ -1,4 +1,5 @@
 import pathlib
+import shutil
 import unittest
 
 from ytldl.yt.cache import Cache, MemoryCache, SqliteCache
@@ -11,7 +12,7 @@ class ITestCache:
             self.cache: Cache
 
         init_cache = [str(i) for i in range(3)]
-        test_sequence = [str(i+1) for i in range(4)]
+        test_sequence = [str(i + 1) for i in range(4)]
         want_sequence = {'3', '4'}
 
         def setUp(self) -> None:
@@ -40,7 +41,6 @@ class TestSqliteCache(ITestCache.TestCache):
 
     def setUp(self) -> None:
         self.db_path.unlink(missing_ok=True)
-        SqliteCache.create(str(self.db_path))
 
         # setting batch_size 2 to test batch
         self.cache = SqliteCache(str(self.db_path), batch_size=2)
@@ -57,6 +57,17 @@ class TestSqliteCache(ITestCache.TestCache):
     def tearDown(self) -> None:
         super().tearDown()
         self.db_path.unlink()
+
+    def test_migrations(self):
+        dbv1PathSrc = pathlib.Path("test_data/v1.db")
+        dbv1Path = pathlib.Path("test_data/v1_test.db")
+        shutil.copyfile(dbv1PathSrc, dbv1Path)
+
+        SqliteCache(str(dbv1Path))
+        # just checking, that second call doesn't raise exception
+        SqliteCache(str(dbv1Path))
+
+        dbv1Path.unlink()
 
 
 if __name__ == '__main__':
