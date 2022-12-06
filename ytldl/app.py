@@ -120,6 +120,10 @@ def main():
                     cache.fix_downloaded_column(video_ids)
                     print(f"Downloaded column fixed for {sqlite_path}")
 
+                    uncached = cache.filter_uncached(video_ids)
+                    uncached_str = "\n".join(uncached)
+                    print(f"Warning: you have {len(uncached)} uncached songs:\n{uncached_str}")
+
 
 if __name__ == "__main__":
     main()
