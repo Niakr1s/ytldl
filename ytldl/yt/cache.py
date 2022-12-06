@@ -20,6 +20,13 @@ class Cache(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def add_discarded_items(self, items: Iterable):
+        """
+        Should cache items.
+        """
+        pass
+
+    @abstractmethod
     def commit(self):
         """
         Should be called to commit, if cache uses batches.
@@ -44,6 +51,9 @@ class MemoryCache(Cache):
     def add_items(self, items: Iterable):
         self.cache.update(items)
 
+    def add_discarded_items(self, items: Iterable):
+        self.cache.update(items)
+
     def commit(self):
         super().commit()
 
@@ -57,7 +67,10 @@ class SqliteCache(Cache):
         batch_size = 0 means, that add_items() will write items immediatly.
         """
         self.batch_size = batch_size
+
+        # batch holds: (videoid: str, dodwnloaded: bool)
         self.batch = []
+
         self.path = pathlib.Path(path)
         path_existed = self.path.exists()
 
@@ -78,8 +91,16 @@ class SqliteCache(Cache):
         return uncached
 
     def add_items(self, items: Iterable):
-        self.batch.extend(items)
+        # downloaded = False
+        self.batch.extend([(item, True) for item in items])
+        self._try_batch_commit()
 
+    def add_discarded_items(self, items: Iterable):
+        # downloaded = True
+        self.batch.extend([(item, False) for item in items])
+        self._try_batch_commit()
+
+    def _try_batch_commit(self):
         exceeds_batch_size = self.batch_size != 0 and len(
             self.batch) >= self.batch_size
 
@@ -94,8 +115,9 @@ class SqliteCache(Cache):
         if len(self.batch) == 0:
             return
 
-        self.cur.executemany('INSERT OR IGNORE INTO "items" ("item", "time") VALUES (?, CURRENT_TIMESTAMP);', [
-            [item] for item in self.batch])
+        self.cur.executemany(
+            'INSERT OR IGNORE INTO "items" ("item", "time", "downloaded") VALUES (?, CURRENT_TIMESTAMP, ?);',
+            [item for item in self.batch])
         self.con.commit()
         self.batch = []
 
@@ -116,6 +138,14 @@ class SqliteCache(Cache):
                 raise e
         finally:
             self.con.execute('UPDATE "items" SET "time" = CURRENT_TIMESTAMP;')
+            self.con.commit()
+
+        try:
+            self.con.execute('ALTER TABLE "items" ADD COLUMN "downloaded" bool DEFAULT false;')
+        except sqlite3.OperationalError as e:
+            if not self._is_duplicate_error(e):
+                raise e
+        finally:
             self.con.commit()
 
     @staticmethod
