@@ -112,9 +112,12 @@ class SqliteCache(Cache):
         try:
             self.con.execute('ALTER TABLE "items" ADD COLUMN "time" timestamp DEFAULT NULL;')
         except sqlite3.OperationalError as e:
-            is_duplicate = str(e).find("duplicate column") != -1
-            if not is_duplicate:
+            if not self._is_duplicate_error(e):
                 raise e
         finally:
             self.con.execute('UPDATE "items" SET "time" = CURRENT_TIMESTAMP;')
             self.con.commit()
+
+    @staticmethod
+    def _is_duplicate_error(e: sqlite3.DatabaseError):
+        return str(e).find("duplicate column") != -1
