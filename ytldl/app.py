@@ -60,12 +60,14 @@ def parse_args() -> argparse.Namespace:
 
     lib_action_parsers = lib_parser.add_subparsers(dest="lib_action")
     lib_action_parsers.required = True
-    lib_action_parsers.choices = ["update"]
+    lib_action_parsers.choices = ["update", "fix"]
 
     lib_action_update_parser = lib_action_parsers.add_parser(
         "update")
     lib_action_update_parser.add_argument(
         "-n", "--limit", help="Limit of downloaded tracks per playlist or channel", default=50, type=int)
+
+    lib_action_parsers.add_parser("fix", description="Try to fix lib. For now, fixes only downloaded column")
 
     res = parser.parse_args()
 
@@ -109,6 +111,14 @@ def main():
                     d = LibDownloader(download_dir=cwd_dir, yt=yt, debug=args.debug,
                                       cache=SqliteCache(str(sqlite_path), batch_size=10))
                     d.lib_update(limit=args.limit)
+
+                case 'fix':
+                    d = Downloader(cwd_dir)
+                    video_ids = d.get_downloaded_video_ids()
+                    print(f"Extracted {len(video_ids)} videoIds from {cwd_dir}")
+                    cache = SqliteCache(str(sqlite_path))
+                    cache.fix_downloaded_column(video_ids)
+                    print(f"Downloaded column fixed for {sqlite_path}")
 
 
 if __name__ == "__main__":

@@ -30,6 +30,18 @@ class TestDownloader(unittest.TestCase):
         d.download(videos=[consts.VIDEO_ID_VIDEO])
         self.assertTrue(len(list(self.dir.iterdir())) == 0)
 
+    def test_get_downloaded_video_ids(self):
+        d = Downloader(str(self.dir))
+        filenames = [
+            "back number - Christmas Song [e7u2aPzWmU4].m4a",
+            "BLUE [ENCOUNT] - Polaris[xnC1Ad_f2ME].m4a",  # here i added some brackets in some parts of filename
+            "someotherfile.m4a"
+        ]
+        for f in filenames:
+            open(self.dir / f, "w").close()
+        video_ids = d.get_downloaded_video_ids()
+        self.assertEqual(["e7u2aPzWmU4", "xnC1Ad_f2ME"], video_ids)
+
     def tearDown(self):
         shutil.rmtree(self.dir)
 

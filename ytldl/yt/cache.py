@@ -81,6 +81,17 @@ class SqliteCache(Cache):
 
         self.cur = self.con.cursor()
 
+    def fix_downloaded_column(self, downloaded_items: list[str]):
+        """
+        Provided with list of downloaded items (e.g. videoId strings),
+        it fixes downloaded column for all items.
+        """
+        self.con.execute('update items set downloaded = false;')
+        self.con.executemany(
+            'update items set downloaded = true where item = ?;',
+            [[item] for item in downloaded_items])
+        self.con.commit()
+
     def filter_uncached(self, items: Iterable) -> set:
         items = list(items)
         in_str = ', '.join(["?"] * len(items))

@@ -1,4 +1,6 @@
+import os
 import pathlib
+import re
 import signal
 from asyncio import Future
 from concurrent.futures import ThreadPoolExecutor
@@ -54,6 +56,7 @@ class Downloader:
         self._yt = yt
         self._extractor = Extractor(yt)
         self._debug = debug
+        self.download_dir = download_dir
         self._set_download_dir(download_dir)
 
         signal.signal(signal.SIGINT, lambda *a: self.stop())
@@ -142,6 +145,29 @@ class Downloader:
         downloaded_tracks = self._download_tracks(
             tracks_to_download, *args, **kwargs)
         return downloaded_tracks
+
+    def get_downloaded_video_ids(self) -> list:
+        """
+        Gets all music filenames from download_dir and parses videoid from it.
+        """
+        files: list[str] = os.listdir(self.download_dir)
+
+        video_ids = [video_id for file in files if
+                     (video_id := self.extract_video_id(file)) is not None]
+        return video_ids
+
+    # for parsing filename
+    pattern = re.compile(".*\[(.+?)\].m4a$")
+
+    # can return None
+    def extract_video_id(self, filename: str) -> str | None:
+        search = self.pattern.search(filename)
+        if search is None:
+            return None
+        try:
+            return self.pattern.search(filename).group(1)
+        except IndexError:
+            return None
 
     def stop(self):
         print("STOPPING...")
