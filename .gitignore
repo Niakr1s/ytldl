@@ -9,3 +9,5 @@ run.cmd
 *egg-info
 build/*
 dist/*
+TestResults
+.vs
