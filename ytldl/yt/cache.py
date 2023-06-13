@@ -1,4 +1,6 @@
+import datetime
 import pathlib
+import shutil
 import sqlite3
 from abc import ABCMeta, abstractmethod
 from typing import Iterable
@@ -79,6 +81,8 @@ class SqliteCache(Cache):
             self._create_v1()
         self._try_migrate()
 
+        self._make_backup(self.path)
+
         self.cur = self.con.cursor()
 
     def fix_downloaded_column(self, downloaded_items: list[str]):
@@ -158,6 +162,13 @@ class SqliteCache(Cache):
                 raise e
         finally:
             self.con.commit()
+
+    @staticmethod
+    def _make_backup(path: pathlib.Path):
+        if path.exists():
+            time_str = datetime.datetime.now().strftime("%d_%m_%Y_%H_%M_%S_%f")
+            copy_to_path = path.with_name(".".join([path.name, time_str, "bak"]))
+            shutil.copyfile(path, copy_to_path)
 
     @staticmethod
     def _is_duplicate_error(e: sqlite3.DatabaseError):

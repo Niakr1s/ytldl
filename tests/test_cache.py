@@ -1,3 +1,4 @@
+import os
 import pathlib
 import shutil
 import unittest
@@ -37,14 +38,19 @@ class TestMemoryCache(ITestCache.TestCache):
 
 
 class TestSqliteCache(ITestCache.TestCache):
-    db_path = pathlib.Path() / "db.db"
+    db_path = pathlib.Path() / "db" / "db.db"
 
     def setUp(self) -> None:
-        self.db_path.unlink(missing_ok=True)
+        shutil.rmtree(self.db_path.parent, ignore_errors=True)
+        os.mkdir(self.db_path.parent)
 
         # setting batch_size 2 to test batch
         self.cache = SqliteCache(str(self.db_path), batch_size=2)
         super().setUp()
+
+    def test_backup(self):
+        SqliteCache(str(self.db_path), batch_size=2)
+        self.assertEqual(3, len(os.listdir(self.db_path.parent)))
 
     def test_batch(self):
         self.assertEqual(self.cache.batch_size, 2)
@@ -56,7 +62,7 @@ class TestSqliteCache(ITestCache.TestCache):
 
     def tearDown(self) -> None:
         super().tearDown()
-        self.db_path.unlink()
+        shutil.rmtree(self.db_path.parent, ignore_errors=True)
 
     def test_migrations(self):
         dbv1PathSrc = pathlib.Path("test_data/v1.db")
