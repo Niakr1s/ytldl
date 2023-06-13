@@ -8,6 +8,7 @@ from os import PathLike
 from time import sleep
 from typing import Callable, Iterable
 
+import ytmusicapi
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
@@ -192,9 +193,6 @@ class CacheDownloader(Downloader):
 
 
 class LibDownloader(CacheDownloader):
-    def __init__(self, download_dir: PathLike, *args, **kwargs):
-        super().__init__(download_dir, *args, **kwargs)
-
     # TODO: add to settings etc
     _personalised_home_titles = [
         # "Listen again", # I don't like "Listen again" section, coz it's download too much monotonous music.
@@ -210,6 +208,13 @@ class LibDownloader(CacheDownloader):
         'Replay Mix',
         'New Release Mix',
     ]
+
+    def __init__(self, download_dir: PathLike, oauth_path: PathLike, /, *args, **kwargs):
+        if not pathlib.Path(oauth_path).exists():
+            ytmusicapi.setup_oauth(str(oauth_path))
+        yt = YTMusic(str(oauth_path))
+
+        super().__init__(download_dir, yt=yt, *args, **kwargs)
 
     def _get_home_items(self, filter_titles: list[str]) -> dict:
         """

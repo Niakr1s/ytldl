@@ -2,8 +2,6 @@ import pathlib
 import shutil
 import unittest
 
-from ytmusicapi import YTMusic
-
 from tests import consts
 from ytldl.yt.download import Downloader, LibDownloader
 
@@ -54,14 +52,8 @@ class TestLibDownloader(unittest.TestCase):
         self.dir.mkdir(parents=True, exist_ok=True)
 
     def test_get_home_items(self):
-        auth_headers_path = pathlib.Path.home() / ".ytldl" / "auth_headers.json"
-        try:
-            yt = YTMusic(auth=str(auth_headers_path))
-        except:
-            print("Caution: No headers provided! Try 'ytldl auth -h [HEADERS] before, test will continue without it.'")
-            yt = YTMusic()
-
-        d = LibDownloader(str(self.dir), yt=YTMusic(auth=str(auth_headers_path)))
+        oauth_path = self.dir / "oauth.json"
+        d = LibDownloader(self.dir, oauth_path)
         d._get_home_items(LibDownloader._personalised_home_titles)
 
     def tearDown(self):
