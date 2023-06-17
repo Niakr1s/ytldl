@@ -4,10 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ytldl"
-version = "0.1.0"
-authors = [
-    { name = "Niakr1s", email = "pavel2188@gmail.com" },
-]
+version = "0.1.1"
+authors = [{ name = "Niakr1s", email = "pavel2188@gmail.com" }]
 description = "A small example package"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -23,6 +21,7 @@ dependencies = [
     'requests==2.31.0',
     'yt-dlp==2023.3.4',
     'ytmusicapi==1.0.2',
+    'robocrypt==4.2.6',
 ]
 
 [project.scripts]
@@ -31,4 +30,3 @@ ytldl = "ytldl.app:main"
 [project.urls]
 "Homepage" = "https://github.com/niakr1s/ytldl"
 "Bug Tracker" = "https://github.com/niakr1s/ytldl/issues"
-

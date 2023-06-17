@@ -8,13 +8,13 @@ from os import PathLike
 from time import sleep
 from typing import Callable, Iterable
 
-import ytmusicapi
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
 from ytldl.util.url import to_url
 from ytldl.yt.cache import Cache, MemoryCache
 from ytldl.yt.extractor import Extractor
+from ytldl.yt.oauth import Oauth
 from ytldl.yt.postprocessors import FilterPP, FilterPPException, LyricsPP, MetadataPP
 
 
@@ -209,10 +209,8 @@ class LibDownloader(CacheDownloader):
         'New Release Mix',
     ]
 
-    def __init__(self, download_dir: PathLike, oauth_path: PathLike, /, *args, **kwargs):
-        if not pathlib.Path(oauth_path).exists():
-            ytmusicapi.setup_oauth(str(oauth_path))
-        yt = YTMusic(str(oauth_path))
+    def __init__(self, download_dir: PathLike, oauth: Oauth, /, *args, **kwargs):
+        yt = YTMusic(oauth.auth)
 
         super().__init__(download_dir, yt=yt, *args, **kwargs)
 

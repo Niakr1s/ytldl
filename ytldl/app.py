@@ -4,6 +4,7 @@ from pathlib import Path
 
 from ytldl.yt.cache import SqliteCache
 from ytldl.yt.download import Downloader, LibDownloader
+from ytldl.yt.oauth import Oauth
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,6 +45,10 @@ def parse_args() -> argparse.Namespace:
         "update")
     lib_action_update_parser.add_argument(
         "-n", "--limit", help="Limit of downloaded tracks per playlist or channel", default=50, type=int)
+    lib_action_update_parser.add_argument(
+        "--reset_oauth", help="Resets oauth info and forces user to redo authentication", action="store_true")
+    lib_action_update_parser.add_argument(
+        "-p", "--password", help="Provides password for storing oauth data locally", default=None, type=str)
 
     lib_action_parsers.add_parser("fix", description="Try to fix lib. For now, fixes only downloaded column")
 
@@ -68,11 +73,17 @@ def main():
             ytldl_dir = cwd_dir / ".ytldl"
             ytldl_dir.mkdir(parents=True, exist_ok=True)
             sqlite_path = cwd_dir / ".ytldl" / "ytldl.db"
-            oauth_path = cwd_dir / ".ytldl" / "oauth.json"
+            oauth_path = cwd_dir / ".ytldl" / "oauth"
+            salt_path = cwd_dir / ".ytldl" / "salt"
 
             match args.lib_action:
                 case 'update':
-                    d = LibDownloader(cwd_dir, oauth_path, debug=args.debug,
+                    if args.reset_oauth:
+                        oauth_path.unlink(missing_ok=True)
+                        salt_path.unlink(missing_ok=True)
+
+                    oauth = Oauth(oauth_path, salt_path, password=args.password)
+                    d = LibDownloader(cwd_dir, oauth, debug=args.debug,
                                       cache=SqliteCache(str(sqlite_path), batch_size=10))
                     d.lib_update(limit=args.limit)
 
